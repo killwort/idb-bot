@@ -61,17 +61,17 @@ namespace IBDTools {
                 var v2Power = NumberFromScreen(new Rectangle(337, 396, 158, 18));
                 var v3Power = NumberFromScreen(new Rectangle(337, 499, 158, 18));
                 Console.WriteLine($"Found opponents with powers {v1Power} {v2Power} {v3Power}, my power {_myPower}");
-                if ((double) v1Power / _myPower < .9) {
+                if ((double) v1Power / _myPower < .9 && v1Power > 0) {
                     WinApi.SendClickAlt(_process.MainWindowHandle, 702, 285);
                     return true;
                 }
 
-                if ((double) v2Power / _myPower < .9) {
+                if ((double) v2Power / _myPower < .9 && v1Power > 0) {
                     WinApi.SendClickAlt(_process.MainWindowHandle, 702, 385);
                     return true;
                 }
 
-                if ((double) v3Power / _myPower < .9) {
+                if ((double) v3Power / _myPower < .9 && v1Power > 0) {
                     WinApi.SendClickAlt(_process.MainWindowHandle, 702, 485);
                     return true;
                 }
