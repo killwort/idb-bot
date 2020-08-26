@@ -135,7 +135,7 @@ namespace Capture.Hook
              * The following ensures that all threads are intercepted:
              * Note: you must do this for each hook.
              */
-            
+
             Direct3DDevice_EndSceneHook.Activate();
             Hooks.Add(Direct3DDevice_EndSceneHook);
 
@@ -172,7 +172,6 @@ namespace Capture.Hook
 
                 RemoveAndDispose(ref _font);
 
-                RemoveAndDispose(ref _overlayEngine);
             }
         }
 
@@ -198,7 +197,7 @@ namespace Capture.Hook
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode, SetLastError = true)]
         unsafe delegate int Direct3D9DeviceEx_PresentExDelegate(IntPtr devicePtr, SharpDX.Rectangle* pSourceRect, SharpDX.Rectangle* pDestRect, IntPtr hDestWindowOverride, IntPtr pDirtyRegion, Present dwFlags);
-        
+
 
         /// <summary>
         /// Reset the _renderTarget so that we are sure it will have the correct presentation parameters (required to support working across changes to windowed/fullscreen or resolution changes)
@@ -208,9 +207,6 @@ namespace Capture.Hook
         /// <returns></returns>
         int ResetHook(IntPtr devicePtr, ref PresentParameters presentParameters)
         {
-            // Ensure certain overlay resources have performed necessary pre-reset tasks
-            if (_overlayEngine != null)
-                _overlayEngine.BeforeDeviceReset();
 
             Cleanup();
 
@@ -229,7 +225,7 @@ namespace Capture.Hook
 
             return Direct3DDeviceEx_PresentExHook.Original(devicePtr, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
         }
-        
+
         unsafe int PresentHook(IntPtr devicePtr, SharpDX.Rectangle* pSourceRect, SharpDX.Rectangle* pDestRect, IntPtr hDestWindowOverride, IntPtr pDirtyRegion)
         {
             _isUsingPresent = true;
@@ -257,7 +253,6 @@ namespace Capture.Hook
             return Direct3DDevice_EndSceneHook.Original(devicePtr);
         }
 
-        Capture.Hook.DX9.DXOverlayEngine _overlayEngine;
 
         /// <summary>
         /// Implementation of capturing from the render target of the Direct3D9 Device (or DeviceEx)
@@ -265,8 +260,6 @@ namespace Capture.Hook
         /// <param name="device"></param>
         void DoCaptureRenderTarget(Device device, string hook)
         {
-            this.Frame();
-            
             try
             {
                 #region Screenshot Request
@@ -279,7 +272,7 @@ namespace Capture.Hook
                     // the data and access it on another thread.
 
                     _queryIssued = false;
-                    
+
                     // Lock the render target
                     SharpDX.Rectangle rect;
                     SharpDX.DataRectangle lockedRect = LockRenderTarget(_renderTargetCopy, out rect);
@@ -355,20 +348,20 @@ namespace Capture.Hook
                                 }
                             }
                         }
-                            
+
                         // Copy data from resolved target to our render target copy
                         device.GetRenderTargetData(_resolvedTarget, _renderTargetCopy);
 
                         _requestCopy = Request.Clone();
                         _query.Issue(Issue.End);
                         _queryIssued = true;
-                        
+
                     }
                     finally
                     {
                         // We have completed the request - mark it as null so we do not continue to try to capture the same request
                         // Note: If you are after high frame rates, consider implementing buffers here to capture more frequently
-                        //         and send back to the host application as needed. The IPC overhead significantly slows down 
+                        //         and send back to the host application as needed. The IPC overhead significantly slows down
                         //         the whole process if sending frame by frame.
                         Request = null;
                     }
@@ -377,35 +370,6 @@ namespace Capture.Hook
                 }
 
                 #endregion
-
-                var displayOverlays = Overlays;
-                if (this.Config.ShowOverlay && displayOverlays != null)
-                {
-                    #region Draw Overlay
-
-                    // Check if overlay needs to be initialised
-                    if (_overlayEngine == null || _overlayEngine.Device.NativePointer != device.NativePointer
-                        || IsOverlayUpdatePending)
-                    {
-                        // Cleanup if necessary
-                        if (_overlayEngine != null)
-                            RemoveAndDispose(ref _overlayEngine);
-
-                        _overlayEngine = ToDispose(new DX9.DXOverlayEngine());
-                        _overlayEngine.Overlays.AddRange((IEnumerable<IOverlay>)displayOverlays);
-                        _overlayEngine.Initialise(device);
-                        IsOverlayUpdatePending = false;
-                    }
-                    // Draw Overlay(s)
-                    if (_overlayEngine != null)
-                    {
-                        foreach (var overlay in _overlayEngine.Overlays)
-                            overlay.Frame();
-                        _overlayEngine.Draw();
-                    }
-
-                    #endregion
-                }
             }
             catch (Exception e)
             {
@@ -430,10 +394,10 @@ namespace Capture.Hook
         {
             if (_resourcesInitialised) return;
             _resourcesInitialised = true;
-            
+
             // Create offscreen surface to use as copy of render target data
             _renderTargetCopy = ToDispose(Surface.CreateOffscreenPlain(device, width, height, format, Pool.SystemMemory));
-            
+
             // Create our resolved surface (resizing if necessary and to resolve any multi-sampling)
             _resolvedTarget = ToDispose(Surface.CreateRenderTarget(device, width, height, format, MultisampleType.None, 0, false));
 

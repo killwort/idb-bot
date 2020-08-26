@@ -1,0 +1,46 @@
+﻿<Window x:Class="IBDTools.ArenaWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:IBDTools.VMs"
+        mc:Ignorable="d"
+        x:Name="SelfWindow"
+        Loaded="ArenaWindow_OnLoaded"
+        Unloaded="ArenaWindow_OnUnloaded"
+        Title="IDB Arena Bot" Height="280" Width="400">
+    <Window.DataContext>
+        <local:ArenaWindow/>
+    </Window.DataContext>
+    <Grid Margin="6">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.ColumnSpan="3" TextWrapping="Wrap" Margin="6">
+            Go to the game and open arena main screen, then press start button. Press Ctrl+Shift+S when you want to stop.
+        </TextBlock>
+
+        <Label Grid.Row="1" Margin="6">Run until reaching</Label>
+        <TextBox MinWidth="50" Grid.Row="1" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning}" Text="{Binding MaxScore}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+        <Label Grid.Row="1" Grid.Column="2" Margin="6">score</Label>
+
+        <Label Grid.Row="2" Margin="6">or</Label>
+        <TextBox MinWidth="50" Grid.Row="2" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning}" Text="{Binding MinTickets}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+        <Label Grid.Row="2" Grid.Column="2" Margin="6">arena tickets</Label>
+
+        <Button Grid.Row="3" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6" IsEnabled="{Binding IsNotRunning}">Start</Button>
+        <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Text="{Binding Status}" Margin="6"></TextBlock>
+        <TextBlock Margin="6" Grid.Row="5" Grid.ColumnSpan="3" Text="{Binding MainMessage}" />
+    </Grid>
+</Window>

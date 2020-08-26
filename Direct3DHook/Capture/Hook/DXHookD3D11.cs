@@ -157,7 +157,7 @@ namespace Capture.Hook
                 _dxgiSwapChainVTblAddresses[(int)DXGI.DXGISwapChainVTbl.Present],
                 new DXGISwapChain_PresentDelegate(PresentHook),
                 this);
-            
+
             // We will capture target/window resizes here
             DXGISwapChain_ResizeTargetHook = new Hook<DXGISwapChain_ResizeTargetDelegate>(
                 _dxgiSwapChainVTblAddresses[(int)DXGI.DXGISwapChainVTbl.ResizeTarget],
@@ -170,7 +170,7 @@ namespace Capture.Hook
              * Note: you must do this for each hook.
              */
             DXGISwapChain_PresentHook.Activate();
-            
+
             DXGISwapChain_ResizeTargetHook.Activate();
 
             Hooks.Add(DXGISwapChain_PresentHook);
@@ -181,11 +181,6 @@ namespace Capture.Hook
         {
             try
             {
-                if (_overlayEngine != null)
-                {
-                    _overlayEngine.Dispose();
-                    _overlayEngine = null;
-                }
             }
             catch
             {
@@ -217,13 +212,6 @@ namespace Capture.Hook
         /// <returns></returns>
         int ResizeTargetHook(IntPtr swapChainPtr, ref ModeDescription newTargetParameters)
         {
-            // Dispose of overlay engine (so it will be recreated with correct renderTarget view size)
-            if (_overlayEngine != null)
-            {
-                _overlayEngine.Dispose();
-                _overlayEngine = null;
-            }
-
             return DXGISwapChain_ResizeTargetHook.Original(swapChainPtr, ref newTargetParameters);
         }
 
@@ -359,7 +347,6 @@ namespace Capture.Hook
         /// <returns>The HRESULT of the original method</returns>
         int PresentHook(IntPtr swapChainPtr, int syncInterval, SharpDX.DXGI.PresentFlags flags)
         {
-            this.Frame();
             SwapChain swapChain = (SharpDX.DXGI.SwapChain)swapChainPtr;
             try
             {
@@ -517,7 +504,7 @@ namespace Capture.Hook
                                     finally
                                     {
                                         this.DebugMessage("PresentHook: Copy to System Memory time: " + (DateTime.Now - startCopyToSystemMemory).ToString());
-                                        
+
                                         if (_finalRTMapped)
                                         {
                                             lock (_lock)
@@ -534,41 +521,12 @@ namespace Capture.Hook
                                 }
                             }
                         }));
-                        
+
 
                         // Note: it would be possible to capture multiple frames and process them in a background thread
                     }
                     this.DebugMessage("PresentHook: Copy BackBuffer time: " + (DateTime.Now - startTime).ToString());
                     this.DebugMessage("PresentHook: Request End");
-                }
-                #endregion
-
-                #region Draw overlay (after screenshot so we don't capture overlay as well)
-                var displayOverlays = Overlays;
-                if (this.Config.ShowOverlay && displayOverlays != null)
-                {
-                    // Initialise Overlay Engine
-                    if (_swapChainPointer != swapChain.NativePointer || _overlayEngine == null
-                        || IsOverlayUpdatePending)
-                    {
-                        if (_overlayEngine != null)
-                            _overlayEngine.Dispose();
-
-                        _overlayEngine = new DX11.DXOverlayEngine();
-                        _overlayEngine.Overlays.AddRange((IEnumerable<IOverlay>)displayOverlays);
-                        _overlayEngine.Initialise(swapChain);
-
-                        _swapChainPointer = swapChain.NativePointer;
-
-                        IsOverlayUpdatePending = false;
-                    }
-                    // Draw Overlay(s)
-                    if (_overlayEngine != null)
-                    {
-                        foreach (var overlay in _overlayEngine.Overlays)
-                            overlay.Frame();
-                        _overlayEngine.Draw();
-                    }
                 }
                 #endregion
             }
@@ -583,8 +541,6 @@ namespace Capture.Hook
             // i.e. calling it here will not cause a stack overflow into this function
             return DXGISwapChain_PresentHook.Original(swapChainPtr, syncInterval, flags);
         }
-
-        Capture.Hook.DX11.DXOverlayEngine _overlayEngine;
 
         IntPtr _swapChainPointer = IntPtr.Zero;
 

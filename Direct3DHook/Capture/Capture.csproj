@@ -114,19 +114,14 @@
     <Compile Include="Hook\DX11\ContextState.cs" />
     <Compile Include="Hook\DX11\DeviceManager.cs" />
     <Compile Include="Hook\DX11\DXImage.cs" />
-    <Compile Include="Hook\DX11\DXOverlayEngine.cs" />
     <Compile Include="Hook\DX11\DXFont.cs" />
     <Compile Include="Hook\DX11\DXSprite.cs" />
     <Compile Include="Hook\DX11\RendererBase.cs" />
-    <Compile Include="Hook\DX9\DXOverlayEngine.cs" />
     <Compile Include="Hook\SafeHGlobal.cs" />
     <Compile Include="Hook\DX11\ScreenAlignedQuadRenderer.cs" />
     <Compile Include="Hook\DX9FormatExtension.cs" />
-    <Compile Include="Hook\FramesPerSecond.cs" />
     <Compile Include="Hook\Hook.cs" />
     <Compile Include="Hook\HookManager.cs" />
-    <Compile Include="Hook\TextDisplay.cs" />
-    <Compile Include="Interface\DrawOverlayEventArgs.cs" />
     <Compile Include="Interface\ScreenshotExtensions.cs" />
     <Compile Include="Interface\CaptureConfig.cs" />
     <Compile Include="EntryPoint.cs" />
@@ -140,7 +135,6 @@
     <Compile Include="Hook\IDXHook.cs" />
     <Compile Include="Interface\CaptureInterface.cs" />
     <Compile Include="Interface\Direct3DVersion.cs" />
-    <Compile Include="Interface\DisplayTextEventArgs.cs" />
     <Compile Include="Interface\ImageFormat.cs" />
     <Compile Include="Interface\MessageReceivedEventArgs.cs" />
     <Compile Include="Interface\MessageType.cs" />

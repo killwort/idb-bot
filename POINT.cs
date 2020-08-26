@@ -1,6 +1,9 @@
 ﻿using System.Runtime.InteropServices;
 
 namespace IBDTools {
+    namespace VMs {
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT {
         private int _X;

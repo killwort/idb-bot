@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Runtime.InteropServices;
 using EasyHook;
 using System.IO;
@@ -23,14 +21,8 @@ namespace Capture.Hook
             this.Interface = ssInterface;
             this.Timer = new Stopwatch();
             this.Timer.Start();
-            this.FPS = new FramesPerSecond();
-
             Interface.ScreenshotRequested += InterfaceEventProxy.ScreenshotRequestedProxyHandler;
-            Interface.DisplayText += InterfaceEventProxy.DisplayTextProxyHandler;
-            Interface.DrawOverlay += InterfaceEventProxy.DrawOverlayProxyHandler;
             InterfaceEventProxy.ScreenshotRequested += new ScreenshotRequestedEvent(InterfaceEventProxy_ScreenshotRequested);
-            InterfaceEventProxy.DisplayText += new DisplayTextEvent(InterfaceEventProxy_DisplayText);
-            InterfaceEventProxy.DrawOverlay += InterfaceEventProxy_DrawOverlay;
         }
 
         ~BaseDXHook()
@@ -38,41 +30,16 @@ namespace Capture.Hook
             Dispose(false);
         }
 
-        void InterfaceEventProxy_DisplayText(DisplayTextEventArgs args)
-        {
-            TextDisplay = new TextDisplay()
-            {
-                Text = args.Text,
-                Duration = args.Duration
-            };
-        }
+
 
         protected virtual void InterfaceEventProxy_ScreenshotRequested(ScreenshotRequest request)
         {
-            
-            this.Request = request;
-        }
 
-        private void InterfaceEventProxy_DrawOverlay(DrawOverlayEventArgs args)
-        {
-            Overlays = new List<Common.IOverlay>();
-            if (args.Overlay != null)
-                Overlays.Add(args.Overlay);
-            IsOverlayUpdatePending = true;
+            this.Request = request;
         }
 
         protected Stopwatch Timer { get; set; }
 
-        /// <summary>
-        /// Frames Per second counter, FPS.Frame() must be called each frame
-        /// </summary>
-        protected FramesPerSecond FPS { get; set; }
-
-        protected TextDisplay TextDisplay { get; set; }
-
-        protected List<Common.IOverlay> Overlays { get; set; }
- 
-        protected bool IsOverlayUpdatePending { get; set; }
 
         int _processId = 0;
         protected int ProcessId
@@ -95,12 +62,6 @@ namespace Capture.Hook
             }
         }
 
-        protected void Frame()
-        {
-            FPS.Frame();
-            if (TextDisplay != null && TextDisplay.Display) 
-                TextDisplay.Frame();
-        }
 
         protected void DebugMessage(string message)
         {
@@ -222,7 +183,7 @@ namespace Capture.Hook
                     Stride = pitch
                 };
             }
-            else 
+            else
             {
                 // Return an image
                 using (var bm = data.ToBitmap(width, height, pitch, format))
@@ -346,7 +307,7 @@ namespace Capture.Hook
             get;
             set;
         }
-        
+
         private CaptureConfig _config;
         public CaptureConfig Config
         {
@@ -412,8 +373,6 @@ namespace Capture.Hook
                     {
                         // Remove the event handlers
                         Interface.ScreenshotRequested -= InterfaceEventProxy.ScreenshotRequestedProxyHandler;
-                        Interface.DisplayText -= InterfaceEventProxy.DisplayTextProxyHandler;
-                        Interface.DrawOverlay -= InterfaceEventProxy_DrawOverlay;
                     }
                     catch (RemotingException) { } // Ignore remoting exceptions (host process may have been closed)
                 }
