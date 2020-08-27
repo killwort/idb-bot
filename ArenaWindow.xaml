@@ -32,15 +32,15 @@
         </TextBlock>
 
         <Label Grid.Row="1" Margin="6">Run until reaching</Label>
-        <TextBox MinWidth="50" Grid.Row="1" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning}" Text="{Binding MaxScore}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+        <TextBox MinWidth="50" Grid.Row="1" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning, Mode=OneWay}" Text="{Binding MaxScore, Mode=TwoWay}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
         <Label Grid.Row="1" Grid.Column="2" Margin="6">score</Label>
 
         <Label Grid.Row="2" Margin="6">or</Label>
-        <TextBox MinWidth="50" Grid.Row="2" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning}" Text="{Binding MinTickets}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+        <TextBox MinWidth="50" Grid.Row="2" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning, Mode=OneWay}" Text="{Binding MinTickets, Mode=TwoWay}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
         <Label Grid.Row="2" Grid.Column="2" Margin="6">arena tickets</Label>
 
         <Button Grid.Row="3" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6" IsEnabled="{Binding IsNotRunning}">Start</Button>
-        <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Text="{Binding Status}" Margin="6"></TextBlock>
-        <TextBlock Margin="6" Grid.Row="5" Grid.ColumnSpan="3" Text="{Binding MainMessage}" />
+        <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6"></TextBlock>
+        <TextBlock Margin="6" Grid.Row="5" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
     </Grid>
 </Window>

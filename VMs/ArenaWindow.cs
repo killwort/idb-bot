@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using IBDTools.Workers;
+using log4net;
 
 namespace IBDTools.VMs {
     public class ArenaWindow :DependencyObject{
@@ -39,6 +40,7 @@ namespace IBDTools.VMs {
             }
         }
         public void Stop() {
+            LogManager.GetLogger(GetType()).Warn("Stop event received!");
             _cancel?.Cancel();
         }
     }

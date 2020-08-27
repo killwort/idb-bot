@@ -31,6 +31,10 @@ namespace IBDTools.Screens {
             public string Name;
             public long Power;
             public long Score;
+
+            public override string ToString() {
+                return $"{Index + 1}:{Name}: Power {Power}, Score {Score}";
+            }
         }
 
         public long MyPower => Context.NumberFromBitmap(CurrentScreen, MyPowerBox);

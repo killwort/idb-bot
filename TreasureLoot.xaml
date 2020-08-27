@@ -31,8 +31,8 @@
             Go to the game and open treasure maps screen, then press start button. Press Ctrl+Shift+S when you want to stop.
         </TextBlock>
 
-        <Button Grid.Row="1" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6" IsEnabled="{Binding IsNotRunning}">Start</Button>
-        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding Status}" Margin="6"></TextBlock>
-        <TextBlock Margin="6" Grid.Row="3" Grid.ColumnSpan="3" Text="{Binding MainMessage}" />
+        <Button Grid.Row="1" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6" IsEnabled="{Binding IsNotRunning, Mode=OneWay}">Start</Button>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6"></TextBlock>
+        <TextBlock Margin="6" Grid.Row="3" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
     </Grid>
 </Window>
