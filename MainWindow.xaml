@@ -22,9 +22,11 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <TextBlock Grid.Column="1" Text="{Binding ConnectionStatus}"/>
         <Button Grid.Column="1" Grid.Row="2" Padding="6" IsEnabled="{Binding IsConnectedToGame}" Click="StartArena">Arena Bot</Button>
+        <Button Grid.Column="1" Grid.Row="3" Padding="6" IsEnabled="{Binding IsConnectedToGame}" Click="StartTreasureLoot">Treasure map looter</Button>
     </Grid>
 </Window>

@@ -33,12 +33,14 @@ namespace IBDTools.Workers {
                         matcher.EngageOpponent(minPowerOpponent);
                         break;
                     }
+
                     matcher.GetNewOpponents();
                     if (!matcher.IsScreenActive())
                         throw new InvalidOperationException("Not on the arena matcher screen");
                 }
+
                 cancellationToken.ThrowIfCancellationRequested();
-                if(!prepareBattle.IsScreenActive())
+                if (!prepareBattle.IsScreenActive())
                     throw new InvalidOperationException("Not on the prepare battle screen");
                 cancellationToken.ThrowIfCancellationRequested();
                 prepareBattle.Engage();
@@ -51,13 +53,12 @@ namespace IBDTools.Workers {
                         if (lobby.IsScreenActive())
                             break;
                         await Task.Delay(500);
-                    }else
+                    } else
                         throw new InvalidOperationException("Not on the arena matcher screen");
                 }
 
                 await Task.Delay(300, cancellationToken);
             }
         }
-
     }
 }

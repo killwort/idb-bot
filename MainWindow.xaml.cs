@@ -15,5 +15,10 @@ namespace IBDTools {
             var dialog = new ArenaWindow();
             dialog.ShowDialog();
         }
+
+        private void StartTreasureLoot(object sender, RoutedEventArgs e) {
+            var dialog = new TreasureLootWindow();
+            dialog.ShowDialog();
+        }
     }
 }
