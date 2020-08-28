@@ -199,13 +199,14 @@ namespace IBDTools {
         }
 
         private static string SaveBitmapPart(Bitmap bm, Bitmap subbitmap) {
-            var basename = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "images");
+            /*var basename = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "images");
             if (!Directory.Exists(basename))
                 Directory.CreateDirectory(basename);
             var id = Guid.NewGuid().ToString("N");
             subbitmap.Save(Path.Combine(basename, id + $".part.png"), ImageFormat.Png);
             bm.Save(Path.Combine(basename, id + ".full.png"), ImageFormat.Png);
-            return id;
+            return id;*/
+            return string.Empty;
         }
 
         private static string SaveBitmapPart(Bitmap bm, Rectangle rt) {
