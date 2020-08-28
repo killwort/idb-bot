@@ -29,14 +29,14 @@ namespace IBDTools.VMs {
                 MaxScore = MaxScore,
                 MinTickets = MinTickets
             };
-            IsNotRunning = false;
+            Dispatcher.Invoke(() => IsNotRunning = false);
             try {
-                await _worker.Run(GameContext, s => Status = s, _cancel.Token);
-                MainMessage = "Goal reached, stopped";
+                await _worker.Run(GameContext, s => Dispatcher.Invoke(()=> Status = s), _cancel.Token);
+                Dispatcher.Invoke(()=>MainMessage = "Goal reached, stopped");
             } catch (Exception e) {
-                MainMessage = e.GetType().Name + ": " + e.Message;
+                Dispatcher.Invoke(() => MainMessage = e.GetType().Name + ": " + e.Message);
             } finally {
-                IsNotRunning = true;
+                Dispatcher.Invoke(() => IsNotRunning = true);
             }
         }
         public void Stop() {

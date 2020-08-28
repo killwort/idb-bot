@@ -22,14 +22,14 @@ namespace IBDTools.VMs {
             _cancel?.Cancel();
             _cancel = new CancellationTokenSource();
             _worker = new TreasureMapLooter();
-            IsNotRunning = false;
+            Dispatcher.Invoke(() => IsNotRunning = false);
             try {
-                await _worker.Run(GameContext, s => Status = s, _cancel.Token);
-                MainMessage = "No maps left!";
+                await _worker.Run(GameContext, s => Dispatcher.Invoke(()=> Status = s), _cancel.Token);
+                Dispatcher.Invoke(()=>MainMessage = "No maps left!");
             } catch (Exception e) {
-                MainMessage = e.GetType().Name + ": " + e.Message;
+                Dispatcher.Invoke(() => MainMessage = e.GetType().Name + ": " + e.Message);
             } finally {
-                IsNotRunning = true;
+                Dispatcher.Invoke(() => IsNotRunning = true);
             }
         }
         public void Stop() {
