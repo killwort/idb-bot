@@ -1,25 +1,29 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Capture;
 using Capture.Interface;
 using log4net;
 using Tesseract;
+using ImageFormat = System.Drawing.Imaging.ImageFormat;
+using Point = System.Drawing.Point;
 
 namespace IBDTools {
     public class GameContext {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(GameContext));
-        public GameContext() {
-            InitTesseract();
-        }
+        public GameContext() { InitTesseract(); }
         private static CaptureProcess _captureProcess;
 
         public bool Connect() => InitCaptureInterface();
 
         private Process _process;
+
         private bool InitCaptureInterface() {
             Logger.Info("Connecting to game");
             _process = Process.GetProcessesByName("DMW").FirstOrDefault();
@@ -44,6 +48,7 @@ namespace IBDTools {
             Logger.DebugFormat("Simulate click at ({0}, {1})", point.X, point.Y);
             WinApi.SendClickAlt(_process.MainWindowHandle, point.X, point.Y);
         }
+
         public void ClickAt(int x, int y) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", x, y);
             WinApi.SendClickAlt(_process.MainWindowHandle, x, y);
@@ -51,47 +56,171 @@ namespace IBDTools {
 
         private void InitTesseract() {
             var tesseractData = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "tessdata");
-            _englishOcr = new TesseractEngine(tesseractData, "eng");
+            _englishOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
             _englishOcr.SetVariable("tessedit_char_whitelist", "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM");
-            _numbersOcr = new TesseractEngine(tesseractData, "eng");
+            _numbersOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
             _numbersOcr.SetVariable("tessedit_char_whitelist", "0123456789");
             Logger.Info("Tessract engines initialized");
         }
 
-        public string TextFromScreen(Rectangle rt) {
-            using (var bm = GrabWindowPart(rt))
-            using (var page = _englishOcr.Process(bm, new Rect(0, 0, rt.Width, rt.Height))) {
-                var text=page.GetText().Trim();
-                Logger.DebugFormat("Read \"{0}\" from screen rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height);
-                return text;
-            }
-        }
-
         public string TextFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var page = _englishOcr.Process(bm, new Rect(rt.Left, rt.Top, rt.Width, rt.Height))) {
-                var text=page.GetText().Trim();
+            using (var subBitmap = Extract(bm, rt))
+            using (var page = _englishOcr.Process(subBitmap)) {
+                var text = page.GetText().Trim();
                 Logger.DebugFormat("Read \"{0}\" from bitmap rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height);
                 return text;
             }
         }
 
-        public long NumberFromScreen(Rectangle rt) {
-            using (var bm = GrabWindowPart(rt))
-            using (var page = _numbersOcr.Process(bm, new Rect(0, 0, rt.Width, rt.Height))) {
+        private static readonly Regex NumbersRegex = new Regex("[^0-9]+", RegexOptions.Compiled);
+
+        public long NumberFromBitmap(Bitmap bm, Rectangle rt) {
+            using (var subBitmap = Extract(bm, rt))
+            using (var page = _numbersOcr.Process(subBitmap)) {
                 var text = page.GetText().Trim();
-                bool success=long.TryParse(page.GetText().Trim(), out var rv);
-                Logger.DebugFormat("Read \"{0}\" as number {5} ({6}) from screen rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, rv, success ? "successfully" : "failed");
+                text = NumbersRegex.Replace(text, "");
+                bool success = long.TryParse(text, out var rv);
+                string bmId = null;
+                if (Logger.IsDebugEnabled && (string.IsNullOrEmpty(text) || !success)) {
+                    bmId = SaveBitmapPart(bm, subBitmap);
+                }
+
+                Logger.DebugFormat("Read \"{0}\" as number {5} ({6}) from bitmap {7} rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, rv, success ? "successfully" : "failed", bmId);
                 return rv;
             }
         }
 
-        public long NumberFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var page = _numbersOcr.Process(bm, new Rect(rt.Left, rt.Top, rt.Width, rt.Height))) {
-                var text = page.GetText().Trim();
-                bool success=long.TryParse(page.GetText().Trim(), out var rv);
-                Logger.DebugFormat("Read \"{0}\" as number {5} ({6}) from bitmap rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, rv, success ? "successfully" : "failed");
-                return rv;
+        private static Bitmap NormalizeBitmap(Bitmap tbm) {
+            var w = tbm.Width;
+            var h = tbm.Height;
+
+            var sd = tbm.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            var bytes = sd.Stride * sd.Height;
+            var buffer = new byte[bytes];
+            var result = new byte[bytes];
+            Marshal.Copy(sd.Scan0, buffer, 0, bytes);
+            tbm.UnlockBits(sd);
+            var current = 0;
+            byte max = 0;
+            byte min = 255;
+            var histogram = new int[256];
+
+            for (var i = 0; i < buffer.Length; i += 4) {
+                var mixed = buffer[i] + buffer[i + 1] + buffer[i + 2];
+                mixed /= 3;
+                histogram[mixed]++;
             }
+
+            var lowLevel = (w * h * 1 / 100);
+
+            for (var i = 0; i < histogram.Length; i++)
+                if (histogram[i] > lowLevel) {
+                    min = (byte) (i - 1);
+                    break;
+                }
+
+            for (var i = histogram.Length - 2; i >= 0; i--)
+                if (histogram[i] > lowLevel) {
+                    max = (byte) (i + 1);
+                    break;
+                }
+
+            if (min == max) max++;
+
+            for (var y = 0; y < h; y++) {
+                for (var x = 0; x < w; x++) {
+                    current = y * sd.Stride + x * 4;
+                    var mixed = buffer[current] + buffer[current + 1] + buffer[current + 2];
+                    mixed = Math.Min(255, Math.Max(0, mixed / 3 - min) * 255 / (max - min));
+                    for (var i = 0; i < 3; i++) {
+                        result[current + i] = (byte) mixed; // (byte) ((buffer[current + i] - min) * 100 / (max - min));
+                    }
+
+                    result[current + 3] = 255;
+                }
+            }
+
+            var resimg = new Bitmap(w, h);
+            var rd = resimg.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(result, 0, rd.Scan0, bytes);
+            resimg.UnlockBits(rd);
+            return resimg;
+        }
+
+        private static Bitmap Extract(Bitmap bm, Rectangle rt) {
+            var tbm = new Bitmap(rt.Size.Width, rt.Size.Height);
+            using (var dc = Graphics.FromImage(tbm))
+                dc.DrawImage(bm, new Rectangle(new Point(0, 0), rt.Size), rt, GraphicsUnit.Pixel);
+            return tbm;
+
+            /*using (var full = BitmapConverter.ToMat(bm))
+            using (var part = new Mat(full, new OpenCvSharp.Rect(rt.X, rt.Y, rt.Width, rt.Height))) {
+                using (var gray = part.Clone()) {
+                    gray.CvtColor(ColorConversionCodes.RGBA2GRAY);
+                    Mat hist = new Mat();
+                    int[] hdims = {256}; // Histogram size for each dimension
+                    Rangef[] ranges = {new Rangef(0, 256),}; // min/max
+                    Cv2.CalcHist(new Mat[] {gray}, new int[] {0}, null, hist, 1, hdims, ranges);
+                    // calculate cumulative distribution from the histogram
+                    var histSize = 256;
+                    float[] accumulator = new float[histSize];
+                    accumulator[0] = hist.At<float>(0);
+                    for (int i = 1; i < histSize; i++) {
+                        accumulator[i] = accumulator[i - 1] + hist.At<float>(i);
+                    }
+
+                    float max = accumulator.Last();
+                    var clipHistPercent = 5 * (max / 100.0); //make percent as absolute
+                    clipHistPercent /= 2.0; // left and right wings
+                    // locate left cut
+                    var minGray = 0;
+                    while (accumulator[minGray] < clipHistPercent)
+                        minGray++;
+
+                    // locate right cut
+                    var maxGray = histSize - 1;
+                    while (accumulator[maxGray] >= (max - clipHistPercent))
+                        maxGray--;
+
+                    float inputRange = maxGray - minGray;
+
+                    var alpha = (histSize - 1) / inputRange; // alpha expands current range to histsize range
+                    var beta = -minGray * alpha; // beta shifts current range so that minGray will go to 0
+
+                    // Apply brightness and contrast normalization
+                    // convertTo operates with saurate_cast
+                    using (var dest = new Mat()) {
+                        gray.ConvertTo(dest, -1, alpha, beta);
+
+                        return BitmapConverter.ToBitmap(dest);
+                    }
+                }
+            }*/
+        }
+
+        private static string SaveBitmapPart(Bitmap bm, Bitmap subbitmap) {
+            var basename = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "images");
+            if (!Directory.Exists(basename))
+                Directory.CreateDirectory(basename);
+            var id = Guid.NewGuid().ToString("N");
+            subbitmap.Save(Path.Combine(basename, id + $".part.png"), ImageFormat.Png);
+            bm.Save(Path.Combine(basename, id + ".full.png"), ImageFormat.Png);
+            return id;
+        }
+
+        private static string SaveBitmapPart(Bitmap bm, Rectangle rt) {
+            var basename = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "images");
+            if (!Directory.Exists(basename))
+                Directory.CreateDirectory(basename);
+            var id = Guid.NewGuid().ToString("N");
+            bm.Save(Path.Combine(basename, id + ".full.png"), ImageFormat.Png);
+            using (var tbm = new Bitmap(rt.Size.Width, rt.Size.Height)) {
+                using (var dc = Graphics.FromImage(tbm))
+                    dc.DrawImage(bm, new Rectangle(new Point(0, 0), rt.Size), rt, GraphicsUnit.Pixel);
+                tbm.Save(Path.Combine(basename, id + $".({rt.X},{rt.Y})+({rt.Width},{rt.Height}).png"), ImageFormat.Png);
+            }
+
+            return id;
         }
 
         public Bitmap FullScreenshot() { return GrabWindowPart(Rectangle.Empty); }

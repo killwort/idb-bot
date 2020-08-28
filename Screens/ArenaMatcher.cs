@@ -12,10 +12,8 @@ namespace IBDTools.Screens {
         protected override string RequiredText => "Score";
 
         protected override Rectangle RequiredTextBox => new Rectangle(500, 469, 42, 19);
-
-        //500,465
         private static readonly Rectangle MyPowerBox = new Rectangle(250, 175, 460, 19);
-        private static readonly Rectangle TicketsLeftBox = new Rectangle(495, 68, 100, 19);
+        private static readonly Rectangle TicketsLeftBox = new Rectangle(493, 68, 100, 19);
         private static readonly Point RefreshButton = new Point(723, 181);
         private static readonly Point CloseButton = new Point(788, 121);
 

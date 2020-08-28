@@ -59,6 +59,7 @@
         <Compile Include="Screens\RewardsDialog.cs" />
         <Compile Include="Screens\SnapshotOnActivationScreen.cs" />
         <Compile Include="Screens\TreasureMaps.cs" />
+        <Compile Include="Screens\VerifyByPointsScreen.cs" />
         <Compile Include="Screens\VerifyByTextScreen.cs" />
         <Compile Include="App.xaml.cs" />
         <Compile Include="TreasureLoot.xaml.cs">
