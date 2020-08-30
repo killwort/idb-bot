@@ -5,6 +5,8 @@ using IBDTools.VMs;
 
 namespace IBDTools.Workers {
     public class Mapper : IWorker {
-        public async Task Run(GameContext context, BaseWorkerWindow vm, Action<string> statusUpdater, CancellationToken cancellationToken) { }
+        public async Task Run(GameContext context, BaseWorkerWindow vm, Action<string> statusUpdater, CancellationToken cancellationToken) {
+
+        }
     }
 }

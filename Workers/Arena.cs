@@ -15,6 +15,8 @@ namespace IBDTools.Workers {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(Arena));
         public long MaxScore;
         public long MinTickets;
+        public bool UseHistory;
+        public bool UseScore;
 
         public async Task Run(GameContext context, BaseWorkerWindow vm, Action<string> statusUpdater, CancellationToken cancellationToken) {
             using (NDC.Push("Arena Worker")) {
@@ -96,12 +98,14 @@ namespace IBDTools.Workers {
                                 };
                             }
                         ).ToArray();
-                        var knownBestOpponent = opponentsWithHistory.OrderByDescending(x => x.AvgChange).FirstOrDefault();
-                        if (knownBestOpponent != null && knownBestOpponent.AvgChange > 5) {
-                            Logger.InfoFormat("Engaging known opponent {0} with average score {1}.", knownBestOpponent.Opponent, knownBestOpponent.AvgChange);
-                            lastOpponent = knownBestOpponent.Opponent;
-                            await matcher.EngageOpponent(knownBestOpponent.Opponent, cancellationToken);
-                            break;
+                        if (UseHistory) {
+                            var knownBestOpponent = opponentsWithHistory.OrderByDescending(x => x.AvgChange).FirstOrDefault();
+                            if (knownBestOpponent != null && knownBestOpponent.AvgChange > 5) {
+                                Logger.InfoFormat("Engaging known opponent {0} with average score {1}.", knownBestOpponent.Opponent, knownBestOpponent.AvgChange);
+                                lastOpponent = knownBestOpponent.Opponent;
+                                await matcher.EngageOpponent(knownBestOpponent.Opponent, cancellationToken);
+                                break;
+                            }
                         }
 
                         var minPowerOpponent = opponentsWithHistory.Where(x => x.Opponent.Power > 0 && x.AvgChange >= 0).OrderBy(x => x.Opponent.Power).FirstOrDefault();
@@ -112,13 +116,15 @@ namespace IBDTools.Workers {
                             break;
                         }
 
-                        minPowerOpponent = opponentsWithHistory.Where(x => x.Opponent.Score > 0 && x.Opponent.Power < 2 * matcher.MyPower && x.AvgChange >= 0).OrderByDescending(x => x.Opponent.Score)
-                                                               .FirstOrDefault();
-                        if (minPowerOpponent != null) {
-                            Logger.InfoFormat("Engaging opponent {0} (selected by min score).", minPowerOpponent);
-                            lastOpponent = minPowerOpponent.Opponent;
-                            await matcher.EngageOpponent(minPowerOpponent.Opponent, cancellationToken);
-                            break;
+                        if (UseScore) {
+                            minPowerOpponent = opponentsWithHistory.Where(x => x.Opponent.Score > 0 && x.Opponent.Power < 2 * matcher.MyPower && x.AvgChange >= 0)
+                                                                   .OrderByDescending(x => x.Opponent.Score).FirstOrDefault();
+                            if (minPowerOpponent != null) {
+                                Logger.InfoFormat("Engaging opponent {0} (selected by min score).", minPowerOpponent);
+                                lastOpponent = minPowerOpponent.Opponent;
+                                await matcher.EngageOpponent(minPowerOpponent.Opponent, cancellationToken);
+                                break;
+                            }
                         }
 
                         Logger.Info("Refreshing matcher as no valid opponents found.");

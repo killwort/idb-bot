@@ -9,6 +9,9 @@
                 x:Name="SelfWindow"
 
                 Title="IDB Arena Bot" Height="320" Width="400">
+    <Window.Resources>
+        <w:AndConverter x:Key="AndConverter"/>
+    </Window.Resources>
     <Window.DataContext>
         <local:ArenaWindow />
     </Window.DataContext>
@@ -38,14 +41,21 @@
                  HorizontalContentAlignment="Center" />
         <Label Grid.Row="1" Grid.Column="2" Margin="6">score</Label>
 
-        <Label Grid.Row="2" Margin="6">or</Label>
-        <TextBox MinWidth="50" Grid.Row="2" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning, Mode=OneWay}"
+        <CheckBox Grid.Row="2" Margin="6" IsChecked="{Binding LimitTickets, Mode=TwoWay}" VerticalContentAlignment="Center" VerticalAlignment="Center">or</CheckBox>
+        <TextBox MinWidth="50" Grid.Row="2" Grid.Column="1" Margin="6"
                  Text="{Binding MinTickets, Mode=TwoWay}" VerticalContentAlignment="Center"
-                 HorizontalContentAlignment="Center" />
+                 HorizontalContentAlignment="Center">
+            <TextBox.IsEnabled>
+                <MultiBinding Converter="{StaticResource AndConverter}" Mode="OneWay">
+                    <Binding Path="IsNotRunning" Mode="OneWay"/>
+                    <Binding Path="LimitTickets" Mode="OneWay"/>
+                </MultiBinding>
+            </TextBox.IsEnabled>
+        </TextBox>
         <Label Grid.Row="2" Grid.Column="2" Margin="6">arena tickets</Label>
 
-        <CheckBox Grid.Row="3" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseHistory}">History-based opponent chooser</CheckBox>
-        <CheckBox Grid.Row="4" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseScore}">Score-based opponent chooser</CheckBox>
+        <CheckBox Grid.Row="3" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseHistory, Mode=TwoWay}">History-based opponent chooser</CheckBox>
+        <CheckBox Grid.Row="4" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseScore, Mode=TwoWay}">Score-based opponent chooser</CheckBox>
 
         <Button Grid.Row="5" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6"
                 IsEnabled="{Binding IsNotRunning}">

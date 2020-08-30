@@ -43,6 +43,7 @@
         <Reference Include="WindowsBase" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="AndConverter.cs" />
         <Compile Include="ArenaWindow.xaml.cs">
           <DependentUpon>ArenaWindow.xaml</DependentUpon>
         </Compile>
