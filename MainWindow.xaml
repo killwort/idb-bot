@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:IBDTools.VMs"
         mc:Ignorable="d"
         x:Name="SelfWindow"
@@ -14,19 +13,25 @@
     </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <TextBlock Grid.Column="1" Text="{Binding ConnectionStatus, Mode=OneWay}"/>
-        <Button Grid.Column="1" Grid.Row="2" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}" Click="StartArena">Arena Bot</Button>
-        <Button Grid.Column="1" Grid.Row="3" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}" Click="StartTreasureLoot">Treasure map looter</Button>
+        <TextBlock Grid.Column="1" Text="{Binding ConnectionStatus, Mode=OneWay}" />
+        <Button Grid.Column="1" Grid.Row="2" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
+                Click="StartArena">
+            Arena Bot
+        </Button>
+        <Button Grid.Column="1" Grid.Row="3" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
+                Click="StartTreasureLoot">
+            Treasure map looter
+        </Button>
     </Grid>
 </Window>

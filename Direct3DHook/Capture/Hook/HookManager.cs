@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics;
 using EasyHook;
 
-namespace Capture.Hook
-{
-    public class HookManager
-    {
-        static internal List<Int32> HookedProcesses = new List<Int32>();
+namespace Capture.Hook {
+    public class HookManager {
+        internal static List<int> HookedProcesses = new List<int>();
 
         /*
          * Please note that we have obtained this information with system privileges.
@@ -21,53 +17,35 @@ namespace Capture.Hook
          * it contains but you should keep the code semantic.
          */
         internal static List<ProcessInfo> ProcessList = new List<ProcessInfo>();
-        private static List<Int32> ActivePIDList = new List<Int32>();
+        private static List<int> ActivePIDList = new List<int>();
 
-        public static void AddHookedProcess(Int32 processId)
-        {
-            lock (HookedProcesses)
-            {
+        public static void AddHookedProcess(int processId) {
+            lock (HookedProcesses) {
                 HookedProcesses.Add(processId);
             }
         }
 
-        public static void RemoveHookedProcess(Int32 processId)
-        {
-            lock (HookedProcesses)
-            {
+        public static void RemoveHookedProcess(int processId) {
+            lock (HookedProcesses) {
                 HookedProcesses.Remove(processId);
             }
         }
 
-        public static bool IsHooked(Int32 processId)
-        {
-            lock (HookedProcesses)
-            {
+        public static bool IsHooked(int processId) {
+            lock (HookedProcesses) {
                 return HookedProcesses.Contains(processId);
             }
         }
 
-        [Serializable]
-        public class ProcessInfo
-        {
-            public String FileName;
-            public Int32 Id;
-            public Boolean Is64Bit;
-            public String User;
-        }
+        public static ProcessInfo[] EnumProcesses() {
+            var result = new List<ProcessInfo>();
+            var procList = Process.GetProcesses();
 
-        public static ProcessInfo[] EnumProcesses()
-        {
-            List<ProcessInfo> result = new List<ProcessInfo>();
-            Process[] procList = Process.GetProcesses();
+            for (var i = 0; i < procList.Length; i++) {
+                var proc = procList[i];
 
-            for (int i = 0; i < procList.Length; i++)
-            {
-                Process proc = procList[i];
-
-                try
-                {
-                    ProcessInfo info = new ProcessInfo();
+                try {
+                    var info = new ProcessInfo();
 
                     info.FileName = proc.MainModule.FileName;
                     info.Id = proc.Id;
@@ -75,13 +53,19 @@ namespace Capture.Hook
                     info.User = RemoteHooking.GetProcessIdentity(proc.Id).Name;
 
                     result.Add(info);
-                }
-                catch
-                {
+                } catch {
                 }
             }
 
             return result.ToArray();
+        }
+
+        [Serializable]
+        public class ProcessInfo {
+            public string FileName;
+            public int Id;
+            public bool Is64Bit;
+            public string User;
         }
     }
 }

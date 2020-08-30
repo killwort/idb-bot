@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Capture;
 using Capture.Interface;
 using log4net;
 using Tesseract;
-using ImageFormat = System.Drawing.Imaging.ImageFormat;
-using Point = System.Drawing.Point;
+using ImageFormat = Capture.Interface.ImageFormat;
 
 namespace IBDTools {
     public class GameContext {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(GameContext));
-        public GameContext() { InitTesseract(); }
+        public GameContext() => InitTesseract();
         private static CaptureProcess _captureProcess;
 
         public bool Connect() => InitCaptureInterface();
@@ -31,7 +30,7 @@ namespace IBDTools {
             Logger.InfoFormat("Found game process {0}", _process.Id);
             WinApi.SetWindowPos(_process.MainWindowHandle, IntPtr.Zero, 0, 0, 1000, 700, 2);
             Logger.Info("Game window size reset");
-            CaptureConfig cc = new CaptureConfig() {
+            var cc = new CaptureConfig {
                 Direct3DVersion = Direct3DVersion.AutoDetect,
                 ShowOverlay = false
             };
@@ -44,18 +43,18 @@ namespace IBDTools {
 
         private TesseractEngine _englishOcr, _numbersOcr;
 
-        public void ClickAt(Point point) {
+        public async Task ClickAt(Point point, CancellationToken cancellationToken, int delay = 200) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", point.X, point.Y);
-            WinApi.SendClickAlt(_process.MainWindowHandle, point.X, point.Y);
+            await WinApi.SendClickAlt(_process.MainWindowHandle, point.X, point.Y, 50, delay, cancellationToken);
         }
 
-        public void ClickAt(int x, int y) {
+        public async Task ClickAt(int x, int y, CancellationToken cancellationToken, int delay = 200) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", x, y);
-            WinApi.SendClickAlt(_process.MainWindowHandle, x, y);
+            await WinApi.SendClickAlt(_process.MainWindowHandle, x, y, 50, delay, cancellationToken);
         }
 
         private void InitTesseract() {
-            var tesseractData = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "tessdata");
+            var tesseractData = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tessdata");
             _englishOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
             _englishOcr.SetVariable("tessedit_char_whitelist", "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM");
             _numbersOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
@@ -79,17 +78,15 @@ namespace IBDTools {
             using (var page = _numbersOcr.Process(subBitmap)) {
                 var text = page.GetText().Trim();
                 text = NumbersRegex.Replace(text, "");
-                bool success = long.TryParse(text, out var rv);
+                var success = long.TryParse(text, out var rv);
                 string bmId = null;
-                if (Logger.IsDebugEnabled && (string.IsNullOrEmpty(text) || !success)) {
-                    bmId = SaveBitmapPart(bm, subBitmap);
-                }
+                if (Logger.IsDebugEnabled && (string.IsNullOrEmpty(text) || !success)) bmId = SaveBitmapPart(bm, subBitmap);
 
                 Logger.DebugFormat("Read \"{0}\" as number {5} ({6}) from bitmap {7} rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, rv, success ? "successfully" : "failed", bmId);
                 return rv;
             }
         }
-
+#if false
         private static Bitmap NormalizeBitmap(Bitmap tbm) {
             var w = tbm.Width;
             var h = tbm.Height;
@@ -146,14 +143,10 @@ namespace IBDTools {
             resimg.UnlockBits(rd);
             return resimg;
         }
-
-        private static Bitmap Extract(Bitmap bm, Rectangle rt) {
-            var tbm = new Bitmap(rt.Size.Width, rt.Size.Height);
-            using (var dc = Graphics.FromImage(tbm))
-                dc.DrawImage(bm, new Rectangle(new Point(0, 0), rt.Size), rt, GraphicsUnit.Pixel);
-            return tbm;
-
-            /*using (var full = BitmapConverter.ToMat(bm))
+#endif
+#if false
+        private static Bitmap NormalizeBitmapOpenCv(Bitmap bm) {
+            using (var full = BitmapConverter.ToMat(bm))
             using (var part = new Mat(full, new OpenCvSharp.Rect(rt.X, rt.Y, rt.Width, rt.Height))) {
                 using (var gray = part.Clone()) {
                     gray.CvtColor(ColorConversionCodes.RGBA2GRAY);
@@ -195,21 +188,35 @@ namespace IBDTools {
                         return BitmapConverter.ToBitmap(dest);
                     }
                 }
-            }*/
+            }
+        }
+#endif
+
+        private static Bitmap Extract(Bitmap bm, Rectangle rt) {
+            var tbm = new Bitmap(rt.Size.Width, rt.Size.Height);
+            using (var dc = Graphics.FromImage(tbm)) {
+                dc.DrawImage(bm, new Rectangle(new Point(0, 0), rt.Size), rt, GraphicsUnit.Pixel);
+            }
+
+            return tbm;
         }
 
         private static string SaveBitmapPart(Bitmap bm, Bitmap subbitmap) {
-            /*var basename = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "images");
+#if DEBUG_SAVE_BITMAPS
+            var basename = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "images");
             if (!Directory.Exists(basename))
                 Directory.CreateDirectory(basename);
             var id = Guid.NewGuid().ToString("N");
             subbitmap.Save(Path.Combine(basename, id + $".part.png"), ImageFormat.Png);
             bm.Save(Path.Combine(basename, id + ".full.png"), ImageFormat.Png);
-            return id;*/
+            return id;
+#else
             return string.Empty;
+#endif
         }
 
         private static string SaveBitmapPart(Bitmap bm, Rectangle rt) {
+#if DEBUG_SAVE_BITMAPS
             var basename = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "images");
             if (!Directory.Exists(basename))
                 Directory.CreateDirectory(basename);
@@ -222,12 +229,15 @@ namespace IBDTools {
             }
 
             return id;
+#else
+            return string.Empty;
+#endif
         }
 
-        public Bitmap FullScreenshot() { return GrabWindowPart(Rectangle.Empty); }
+        public Bitmap FullScreenshot() => GrabWindowPart(Rectangle.Empty);
 
         private static Bitmap GrabWindowPart(Rectangle rt) {
-            var scrn = _captureProcess.CaptureInterface.GetScreenshot(rt, TimeSpan.FromSeconds(2), null, Capture.Interface.ImageFormat.Bitmap);
+            var scrn = _captureProcess.CaptureInterface.GetScreenshot(rt, TimeSpan.FromSeconds(2), null, ImageFormat.Bitmap);
             return new Bitmap(new MemoryStream(scrn.Data));
         }
     }

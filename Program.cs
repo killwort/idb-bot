@@ -1,10 +1,5 @@
-﻿using System;
-using System.Drawing;
-using System.Threading;
-using IBDTools.Workers;
-
-namespace IBDTools {
-    class Program {
+﻿namespace IBDTools {
+    internal class Program {
         /*private static long _maxScore = long.MaxValue, _minTickets;
         private static ManualResetEvent _stopEvent;
         private static GameContext _gameContext;

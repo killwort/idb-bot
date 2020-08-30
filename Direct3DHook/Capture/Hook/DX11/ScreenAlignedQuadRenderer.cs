@@ -1,23 +1,53 @@
-﻿namespace Capture.Hook.DX11
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
+﻿using SharpDX;
+using SharpDX.D3DCompiler;
+using SharpDX.Direct3D;
+using SharpDX.Direct3D11;
+using SharpDX.Mathematics.Interop;
 
-    using SharpDX;
-    using SharpDX.DXGI;
-    using SharpDX.Direct3D11;
-    using SharpDX.D3DCompiler;
-
+namespace Capture.Hook.DX11 {
     // Resolve class name conflicts by explicitly stating
     // which class they refer to:
-    using Buffer = SharpDX.Direct3D11.Buffer;
 
-    public class ScreenAlignedQuadRenderer : RendererBase
-    {
-        string shaderCodeVertexIn = @"Texture2D<float4> Texture0 : register(t0);
+    public class ScreenAlignedQuadRenderer : RendererBase {
+        private SamplerState linearSampleState;
+
+        // The pixel shader
+        private PixelShader pixelShader;
+
+        private SamplerState pointSamplerState;
+
+        private readonly string shaderCode = @"Texture2D<float4> Texture0 : register(t0);
+SamplerState Sampler : register(s0);
+
+struct PixelIn
+{
+    float4 Position : SV_POSITION;
+    float2 UV : TEXCOORD0;
+};
+
+// Vertex shader outputs a full screen quad with UV coords without vertex buffer
+PixelIn VSMain(uint vertexId: SV_VertexID)
+{
+    PixelIn result = (PixelIn)0;
+    
+    // The input quad is expected in device coordinates 
+    // (i.e. 0,0 is center of screen, -1,1 top left, 1,-1 bottom right)
+    // Therefore no transformation!
+
+    // The UV coordinates are top-left 0,0, bottom-right 1,1
+    result.UV = float2((vertexId << 1) & 2, vertexId & 2 );
+    result.Position = float4( result.UV * float2( 2.0f, -2.0f ) + float2( -1.0f, 1.0f), 0.0f, 1.0f );
+
+    return result;
+}
+
+float4 PSMain(PixelIn input) : SV_Target
+{
+    return Texture0.Sample(Sampler, input.UV);
+}
+";
+
+        private string shaderCodeVertexIn = @"Texture2D<float4> Texture0 : register(t0);
 SamplerState Sampler : register(s0);
 
 struct VertexIn
@@ -55,73 +85,29 @@ float4 PSMain(PixelIn input) : SV_Target
 }
 ";
 
+        // The vertex buffer binding
+        private VertexBufferBinding vertexBinding;
 
-
-        string shaderCode = @"Texture2D<float4> Texture0 : register(t0);
-SamplerState Sampler : register(s0);
-
-struct PixelIn
-{
-    float4 Position : SV_POSITION;
-    float2 UV : TEXCOORD0;
-};
-
-// Vertex shader outputs a full screen quad with UV coords without vertex buffer
-PixelIn VSMain(uint vertexId: SV_VertexID)
-{
-    PixelIn result = (PixelIn)0;
-    
-    // The input quad is expected in device coordinates 
-    // (i.e. 0,0 is center of screen, -1,1 top left, 1,-1 bottom right)
-    // Therefore no transformation!
-
-    // The UV coordinates are top-left 0,0, bottom-right 1,1
-    result.UV = float2((vertexId << 1) & 2, vertexId & 2 );
-    result.Position = float4( result.UV * float2( 2.0f, -2.0f ) + float2( -1.0f, 1.0f), 0.0f, 1.0f );
-
-    return result;
-}
-
-float4 PSMain(PixelIn input) : SV_Target
-{
-    return Texture0.Sample(Sampler, input.UV);
-}
-";
-
-
-        // The vertex shader
-        VertexShader vertexShader;
-
-
-        // The pixel shader
-        PixelShader pixelShader;
-
-        SamplerState pointSamplerState;
-        SamplerState linearSampleState;
+        // The vertex buffer
+        private Buffer vertexBuffer;
 
         // The vertex layout for the IA
-        InputLayout vertexLayout;
-        // The vertex buffer
-        Buffer vertexBuffer;
-        // The vertex buffer binding
-        VertexBufferBinding vertexBinding;
+        private InputLayout vertexLayout;
+
+        // The vertex shader
+        private VertexShader vertexShader;
 
         public bool UseLinearSampling { get; set; }
         public ShaderResourceView ShaderResource { get; set; }
         public RenderTargetView RenderTargetView { get; set; }
         public Texture2D RenderTarget { get; set; }
 
-        public ScreenAlignedQuadRenderer()
-        {
-        }
-
         /// <summary>
-        /// Create any device dependent resources here.
-        /// This method will be called when the device is first
-        /// initialized or recreated after being removed or reset.
+        ///     Create any device dependent resources here.
+        ///     This method will be called when the device is first
+        ///     initialized or recreated after being removed or reset.
         /// </summary>
-        protected override void CreateDeviceDependentResources()
-        {
+        protected override void CreateDeviceDependentResources() {
             // Ensure that if already set the device resources
             // are correctly disposed of before recreating
             RemoveAndDispose(ref vertexShader);
@@ -134,7 +120,7 @@ float4 PSMain(PixelIn input) : SV_Target
             var device = DeviceManager.Direct3DDevice;
             var context = DeviceManager.Direct3DContext;
 
-            ShaderFlags shaderFlags = ShaderFlags.None;
+            var shaderFlags = ShaderFlags.None;
 #if DEBUG
             shaderFlags = ShaderFlags.Debug | ShaderFlags.SkipOptimization;
 #endif
@@ -142,10 +128,8 @@ float4 PSMain(PixelIn input) : SV_Target
             //var includeHandler = new HLSLFileIncludeHandler(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Shaders"));
 
             // Compile and create the vertex shader
-            using (var vertexShaderBytecode = ToDispose(ShaderBytecode.Compile(shaderCode, "VSMain", "vs_4_0", shaderFlags, EffectFlags.None, null, null)))
-            {
+            using (var vertexShaderBytecode = ToDispose(ShaderBytecode.Compile(shaderCode, "VSMain", "vs_4_0", shaderFlags, EffectFlags.None, null, null))) {
                 vertexShader = ToDispose(new VertexShader(device, vertexShaderBytecode));
-
 
                 //// Layout from VertexShader input signature
                 //vertexLayout = ToDispose(new InputLayout(device,
@@ -173,40 +157,52 @@ float4 PSMain(PixelIn input) : SV_Target
                 // | A\ |
                 // |   \|
                 // v0   v2
-
             }
 
             // Compile and create the pixel shader
-            using (var bytecode = ToDispose(ShaderBytecode.Compile(shaderCode, "PSMain", "ps_5_0", shaderFlags, EffectFlags.None, null, null)))
+            using (var bytecode = ToDispose(ShaderBytecode.Compile(shaderCode, "PSMain", "ps_5_0", shaderFlags, EffectFlags.None, null, null))) {
                 pixelShader = ToDispose(new PixelShader(device, bytecode));
+            }
 
-            linearSampleState = ToDispose(new SamplerState(device, new SamplerStateDescription
-            {
-                Filter = Filter.MinMagMipLinear,
-                AddressU = TextureAddressMode.Wrap,
-                AddressV = TextureAddressMode.Wrap,
-                AddressW = TextureAddressMode.Wrap,
-                ComparisonFunction = Comparison.Never,
-                MinimumLod = 0,
-                MaximumLod = float.MaxValue
-            }));
+            linearSampleState = ToDispose(
+                new SamplerState(
+                    device,
+                    new SamplerStateDescription {
+                        Filter = Filter.MinMagMipLinear,
+                        AddressU = TextureAddressMode.Wrap,
+                        AddressV = TextureAddressMode.Wrap,
+                        AddressW = TextureAddressMode.Wrap,
+                        ComparisonFunction = Comparison.Never,
+                        MinimumLod = 0,
+                        MaximumLod = float.MaxValue
+                    }
+                )
+            );
 
-            pointSamplerState = ToDispose(new SamplerState(device, new SamplerStateDescription
-            {
-                Filter = Filter.MinMagMipPoint,
-                AddressU = TextureAddressMode.Wrap,
-                AddressV = TextureAddressMode.Wrap,
-                AddressW = TextureAddressMode.Wrap,
-                ComparisonFunction = Comparison.Never,
-                MinimumLod = 0,
-                MaximumLod = float.MaxValue
-            }));
+            pointSamplerState = ToDispose(
+                new SamplerState(
+                    device,
+                    new SamplerStateDescription {
+                        Filter = Filter.MinMagMipPoint,
+                        AddressU = TextureAddressMode.Wrap,
+                        AddressV = TextureAddressMode.Wrap,
+                        AddressW = TextureAddressMode.Wrap,
+                        ComparisonFunction = Comparison.Never,
+                        MinimumLod = 0,
+                        MaximumLod = float.MaxValue
+                    }
+                )
+            );
 
-            context.Rasterizer.State = ToDispose(new RasterizerState(device, new RasterizerStateDescription()
-            {
-                CullMode = CullMode.None,
-                FillMode = FillMode.Solid,                
-            }));
+            context.Rasterizer.State = ToDispose(
+                new RasterizerState(
+                    device,
+                    new RasterizerStateDescription {
+                        CullMode = CullMode.None,
+                        FillMode = FillMode.Solid
+                    }
+                )
+            );
 
             //// Configure the depth buffer to discard pixels that are
             //// further than the current pixel.
@@ -238,14 +234,12 @@ float4 PSMain(PixelIn input) : SV_Target
             //    })));
         }
 
-        protected override void DoRender()
-        {
-            var context = this.DeviceManager.Direct3DContext;
+        protected override void DoRender() {
+            var context = DeviceManager.Direct3DContext;
 
             //context.InputAssembler.InputLayout = vertexLayout;
             //context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleStrip;
             //context.InputAssembler.SetVertexBuffers(0, vertexBinding);
-
 
             // Retrieve the existing shader and IA settings
             //using (var oldVertexLayout = context.InputAssembler.InputLayout)
@@ -257,21 +251,19 @@ float4 PSMain(PixelIn input) : SV_Target
                 context.ClearRenderTargetView(RenderTargetView, Color.CornflowerBlue);
 
                 // Set sampler
-                SharpDX.Mathematics.Interop.RawViewportF[] viewportf = { new ViewportF(0, 0, RenderTarget.Description.Width, RenderTarget.Description.Height, 0, 1) };
+                RawViewportF[] viewportf = {new ViewportF(0, 0, RenderTarget.Description.Width, RenderTarget.Description.Height, 0, 1)};
                 context.Rasterizer.SetViewports(viewportf);
-                context.PixelShader.SetSampler(0, (UseLinearSampling ? linearSampleState : pointSamplerState));
+                context.PixelShader.SetSampler(0, UseLinearSampling ? linearSampleState : pointSamplerState);
 
                 // Set shader resource
                 //bool isMultisampledSRV = false;
                 if (ShaderResource != null && !ShaderResource.IsDisposed)
-                {
                     context.PixelShader.SetShaderResource(0, ShaderResource);
 
-                    //if (ShaderResource.Description.Dimension == SharpDX.Direct3D.ShaderResourceViewDimension.Texture2DMultisampled)
-                    //{
-                    //    isMultisampledSRV = true;
-                    //}
-                }
+                //if (ShaderResource.Description.Dimension == SharpDX.Direct3D.ShaderResourceViewDimension.Texture2DMultisampled)
+                //{
+                //    isMultisampledSRV = true;
+                //}
 
                 // Set pixel shader
                 //if (isMultisampledSRV)
@@ -286,7 +278,7 @@ float4 PSMain(PixelIn input) : SV_Target
                 context.InputAssembler.InputLayout = null;
 
                 // Tell the IA we are using a triangle strip
-                context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleStrip;
+                context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
                 // No vertices to pass (note: null as we will use SV_VertexId)
                 //context.InputAssembler.SetVertexBuffers(0, vertexBuffer);
 
@@ -297,7 +289,7 @@ float4 PSMain(PixelIn input) : SV_Target
                 context.Draw(4, 0);
 
                 // Remove the render target from the pipeline so that we can read from it if necessary
-                context.OutputMerger.SetTargets((RenderTargetView)null);
+                context.OutputMerger.SetTargets((RenderTargetView) null);
 
                 // Restore previous shader and IA settings
                 //context.PixelShader.SetSampler(0, oldSampler);

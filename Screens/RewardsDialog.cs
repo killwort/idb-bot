@@ -1,14 +1,16 @@
 ﻿using System.Drawing;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace IBDTools.Screens {
     public class RewardsDialog : VerifyByTextScreen {
-        public RewardsDialog(GameContext context) : base(context) {
-        }
-
         private static readonly Rectangle OkBox = new Rectangle(479, 503, 28, 22);
+
+        public RewardsDialog(GameContext context) : base(context) { }
+
         protected override Rectangle RequiredTextBox => OkBox;
         protected override string RequiredText => "Ok";
 
-        public void PressOkButton() => Context.ClickAt(OkBox.Location);
+        public Task PressOkButton(CancellationToken cancellationToken) => Context.ClickAt(OkBox.Location, cancellationToken);
     }
 }

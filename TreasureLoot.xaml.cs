@@ -3,29 +3,34 @@ using System.Windows;
 using System.Windows.Interop;
 
 namespace IBDTools {
-    public partial class TreasureLootWindow : Window {
-        public TreasureLootWindow() { InitializeComponent(); }
-
-        public VMs.TreasureLootWindow VM => ((VMs.TreasureLootWindow) DataContext);
+    public class KbHookWindow : Window {
+        private const int WM_HOTKEY = 0x0312;
         private const int HOTKEY_ID = 9000;
         private const uint MOD_CONTROL = 0x0002; //CTRL
         private const uint MOD_SHIFT = 0x0004; //SHIFT
 
-        private void TreasureLootWindow_OnLoaded(object sender, RoutedEventArgs e) {
-            var handle = new WindowInteropHelper(this).Handle;
-            HwndSource.FromHwnd(handle).AddHook(HwndHook);
-            WinApi.RegisterHotKey(handle, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, 0x53);
+        public KbHookWindow() {
+            Loaded += (_, __) => {
+                var hWnd = new WindowInteropHelper(this).Handle;
+                HwndSource.FromHwnd(hWnd)?.AddHook(HwndHook);
+                WinApi.RegisterHotKey(hWnd, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, 0x53);
+            };
+            Unloaded += (_, __) => {
+                var hWnd = new WindowInteropHelper(this).Handle;
+                WinApi.UnregisterHotKey(hWnd, HOTKEY_ID);
+            };
         }
 
+        protected virtual void Stop() { }
+
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) {
-            const int WM_HOTKEY = 0x0312;
             switch (msg) {
                 case WM_HOTKEY:
                     switch (wParam.ToInt32()) {
                         case HOTKEY_ID:
-                            int vkey = (((int) lParam >> 16) & 0xFFFF);
-                            if (vkey == 0x53) {
-                                VM.Stop();
+                            var vk = ((int) lParam >> 16) & 0xFFFF;
+                            if (vk == 0x53) {
+                                Stop();
                             }
 
                             handled = true;
@@ -37,12 +42,13 @@ namespace IBDTools {
 
             return IntPtr.Zero;
         }
+    }
 
-        private void TreasureLootWindow_OnUnloaded(object sender, RoutedEventArgs e) {
-            var handle = new WindowInteropHelper(this).Handle;
-            WinApi.UnregisterHotKey(handle, HOTKEY_ID);
-        }
+    public partial class TreasureLootWindow : KbHookWindow {
+        public TreasureLootWindow() { InitializeComponent(); }
 
-        private void StartBattle(object sender, RoutedEventArgs e) { VM.Start(); }
+        public VMs.TreasureLootWindow VM => (VMs.TreasureLootWindow) DataContext;
+        private void StartBattle(object sender, RoutedEventArgs e) => VM.Start();
+        protected override void Stop() => VM.Stop();
     }
 }

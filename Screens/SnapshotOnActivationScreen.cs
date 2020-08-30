@@ -2,9 +2,17 @@
 
 namespace IBDTools.Screens {
     public abstract class SnapshotOnActivationScreen : IScreen {
-        private Bitmap _currentScreen;
         protected readonly GameContext Context;
-        protected SnapshotOnActivationScreen(GameContext context) { Context = context; }
+        private Bitmap _currentScreen;
+        protected SnapshotOnActivationScreen(GameContext context) => Context = context;
+
+        protected Bitmap CurrentScreen {
+            get => _currentScreen;
+            set {
+                _currentScreen?.Dispose();
+                _currentScreen = value;
+            }
+        }
 
         public bool IsScreenActive() {
             var currentScreen = Context.FullScreenshot();
@@ -15,14 +23,6 @@ namespace IBDTools.Screens {
 
             currentScreen.Dispose();
             return false;
-        }
-
-        protected Bitmap CurrentScreen {
-            get => _currentScreen;
-            set {
-                _currentScreen?.Dispose();
-                _currentScreen = value;
-            }
         }
 
         public abstract bool IsScreenActive(Bitmap screen);

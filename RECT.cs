@@ -4,62 +4,55 @@ using System.Runtime.InteropServices;
 namespace IBDTools {
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT {
-        private int _Left;
-        private int _Top;
-        private int _Right;
-        private int _Bottom;
-
         public RECT(RECT Rectangle) : this(Rectangle.Left, Rectangle.Top, Rectangle.Right, Rectangle.Bottom) { }
 
         public RECT(int Left, int Top, int Right, int Bottom) {
-            _Left = Left;
-            _Top = Top;
-            _Right = Right;
-            _Bottom = Bottom;
+            X = Left;
+            Y = Top;
+            this.Right = Right;
+            this.Bottom = Bottom;
         }
 
-        public int X { get { return _Left; } set { _Left = value; } }
-        public int Y { get { return _Top; } set { _Top = value; } }
-        public int Left { get { return _Left; } set { _Left = value; } }
-        public int Top { get { return _Top; } set { _Top = value; } }
-        public int Right { get { return _Right; } set { _Right = value; } }
-        public int Bottom { get { return _Bottom; } set { _Bottom = value; } }
-        public int Height { get { return _Bottom - _Top; } set { _Bottom = value + _Top; } }
-        public int Width { get { return _Right - _Left; } set { _Right = value + _Left; } }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Left { get => X; set => X = value; }
+        public int Top { get => Y; set => Y = value; }
+        public int Right { get; set; }
+        public int Bottom { get; set; }
+        public int Height { get => Bottom - Y; set => Bottom = value + Y; }
+        public int Width { get => Right - X; set => Right = value + X; }
 
         public Point Location {
-            get { return new Point(Left, Top); }
+            get => new Point(Left, Top);
             set {
-                _Left = value.X;
-                _Top = value.Y;
+                X = value.X;
+                Y = value.Y;
             }
         }
 
         public Size Size {
-            get { return new Size(Width, Height); }
+            get => new Size(Width, Height);
             set {
-                _Right = value.Width + _Left;
-                _Bottom = value.Height + _Top;
+                Right = value.Width + X;
+                Bottom = value.Height + Y;
             }
         }
 
-        public static implicit operator Rectangle(RECT Rectangle) { return new Rectangle(Rectangle.Left, Rectangle.Top, Rectangle.Width, Rectangle.Height); }
-        public static implicit operator RECT(Rectangle Rectangle) { return new RECT(Rectangle.Left, Rectangle.Top, Rectangle.Right, Rectangle.Bottom); }
-        public static bool operator ==(RECT Rectangle1, RECT Rectangle2) { return Rectangle1.Equals(Rectangle2); }
-        public static bool operator !=(RECT Rectangle1, RECT Rectangle2) { return !Rectangle1.Equals(Rectangle2); }
+        public static implicit operator Rectangle(RECT Rectangle) => new Rectangle(Rectangle.Left, Rectangle.Top, Rectangle.Width, Rectangle.Height);
+        public static implicit operator RECT(Rectangle Rectangle) => new RECT(Rectangle.Left, Rectangle.Top, Rectangle.Right, Rectangle.Bottom);
+        public static bool operator ==(RECT Rectangle1, RECT Rectangle2) => Rectangle1.Equals(Rectangle2);
+        public static bool operator !=(RECT Rectangle1, RECT Rectangle2) => !Rectangle1.Equals(Rectangle2);
 
-        public override string ToString() { return "{Left: " + _Left + "; " + "Top: " + _Top + "; Right: " + _Right + "; Bottom: " + _Bottom + "}"; }
+        public override string ToString() => "{Left: " + X + "; " + "Top: " + Y + "; Right: " + Right + "; Bottom: " + Bottom + "}";
 
-        public override int GetHashCode() { return ToString().GetHashCode(); }
+        public override int GetHashCode() => ToString().GetHashCode();
 
-        public bool Equals(RECT Rectangle) { return Rectangle.Left == _Left && Rectangle.Top == _Top && Rectangle.Right == _Right && Rectangle.Bottom == _Bottom; }
+        public bool Equals(RECT Rectangle) => Rectangle.Left == X && Rectangle.Top == Y && Rectangle.Right == Right && Rectangle.Bottom == Bottom;
 
         public override bool Equals(object Object) {
-            if (Object is RECT) {
+            if (Object is RECT)
                 return Equals((RECT) Object);
-            } else if (Object is Rectangle) {
-                return Equals(new RECT((Rectangle) Object));
-            }
+            if (Object is Rectangle) return Equals(new RECT((Rectangle) Object));
 
             return false;
         }

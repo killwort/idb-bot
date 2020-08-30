@@ -10,6 +10,7 @@ namespace IBDTools {
                 await Task.Delay(250, cancellationToken);
             }
         }
+
         public static string Pretty(this long n) {
             var result = "";
             if (n < 0) {

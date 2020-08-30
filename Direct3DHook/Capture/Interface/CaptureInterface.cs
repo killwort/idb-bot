@@ -1,43 +1,43 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 using System.Threading;
-using Capture.Hook.Common;
 
-namespace Capture.Interface
-{
+namespace Capture.Interface {
     [Serializable]
     public delegate void MessageReceivedEvent(MessageReceivedEventArgs message);
+
     [Serializable]
     public delegate void ScreenshotReceivedEvent(ScreenshotReceivedEventArgs response);
+
     [Serializable]
     public delegate void DisconnectedEvent();
+
     [Serializable]
     public delegate void ScreenshotRequestedEvent(ScreenshotRequest request);
 
-
-
     [Serializable]
-    public class CaptureInterface : MarshalByRefObject
-    {
+    public class CaptureInterface : MarshalByRefObject {
         /// <summary>
-        /// The client process Id
+        ///     The client process Id
         /// </summary>
         public int ProcessId { get; set; }
+
+        /// <summary>
+        ///     Used to confirm connection to IPC server channel
+        /// </summary>
+        public DateTime Ping() => DateTime.Now;
 
         #region Events
 
         #region Server-side Events
 
         /// <summary>
-        /// Server event for sending debug and error information from the client to server
+        ///     Server event for sending debug and error information from the client to server
         /// </summary>
         public event MessageReceivedEvent RemoteMessage;
 
         /// <summary>
-        /// Server event for receiving screenshot image data
+        ///     Server event for receiving screenshot image data
         /// </summary>
         public event ScreenshotReceivedEvent ScreenshotReceived;
 
@@ -45,14 +45,13 @@ namespace Capture.Interface
 
         #region Client-side Events
 
-
         /// <summary>
-        /// Client event used to communicate to the client that it is time to create a screenshot
+        ///     Client event used to communicate to the client that it is time to create a screenshot
         /// </summary>
         public event ScreenshotRequestedEvent ScreenshotRequested;
 
         /// <summary>
-        /// Client event used to notify the hook to exit
+        ///     Client event used to notify the hook to exit
         /// </summary>
         public event DisconnectedEvent Disconnected;
 
@@ -62,53 +61,43 @@ namespace Capture.Interface
 
         #region Public Methods
 
-
-
         #region Still image Capture
 
-        object _lock = new object();
-        Guid? _requestId = null;
-        Action<Screenshot> _completeScreenshot = null;
-        ManualResetEvent _wait = new ManualResetEvent(false);
+        private object _lock = new object();
+        private Guid? _requestId;
+        private Action<Screenshot> _completeScreenshot;
+        private ManualResetEvent _wait = new ManualResetEvent(false);
 
         /// <summary>
-        /// Get a fullscreen screenshot with the default timeout of 2 seconds
+        ///     Get a fullscreen screenshot with the default timeout of 2 seconds
         /// </summary>
-        public Screenshot GetScreenshot()
-        {
-            return GetScreenshot(Rectangle.Empty, new TimeSpan(0, 0, 2), null, ImageFormat.Bitmap);
-        }
+        public Screenshot GetScreenshot() => GetScreenshot(Rectangle.Empty, new TimeSpan(0, 0, 2), null, ImageFormat.Bitmap);
 
         /// <summary>
-        /// Get a screenshot of the specified region
+        ///     Get a screenshot of the specified region
         /// </summary>
         /// <param name="region">the region to capture (x=0,y=0 is top left corner)</param>
         /// <param name="timeout">maximum time to wait for the screenshot</param>
-        public Screenshot GetScreenshot(Rectangle region, TimeSpan timeout, Size? resize, ImageFormat format)
-        {
-            lock (_lock)
-            {
+        public Screenshot GetScreenshot(Rectangle region, TimeSpan timeout, Size? resize, ImageFormat format) {
+            lock (_lock) {
                 Screenshot result = null;
                 _requestId = Guid.NewGuid();
                 _wait.Reset();
 
-                SafeInvokeScreenshotRequested(new ScreenshotRequest(_requestId.Value, region)
-                {
-                    Format = format,
-                    Resize = resize,
-                });
+                SafeInvokeScreenshotRequested(
+                    new ScreenshotRequest(_requestId.Value, region) {
+                        Format = format,
+                        Resize = resize
+                    }
+                );
 
-                _completeScreenshot = (sc) =>
-                {
-                    try
-                    {
+                _completeScreenshot = sc => {
+                    try {
                         Interlocked.Exchange(ref result, sc);
+                    } catch {
                     }
-                    catch
-                    {
-                    }
-                    _wait.Set();
 
+                    _wait.Set();
                 };
 
                 _wait.WaitOne(timeout);
@@ -117,214 +106,156 @@ namespace Capture.Interface
             }
         }
 
-        public IAsyncResult BeginGetScreenshot(Rectangle region, TimeSpan timeout, AsyncCallback callback = null, Size? resize = null, ImageFormat format = ImageFormat.Bitmap)
-        {
+        public IAsyncResult BeginGetScreenshot(Rectangle region, TimeSpan timeout, AsyncCallback callback = null, Size? resize = null, ImageFormat format = ImageFormat.Bitmap) {
             Func<Rectangle, TimeSpan, Size?, ImageFormat, Screenshot> getScreenshot = GetScreenshot;
 
             return getScreenshot.BeginInvoke(region, timeout, resize, format, callback, getScreenshot);
         }
 
-        public Screenshot EndGetScreenshot(IAsyncResult result)
-        {
-            Func<Rectangle, TimeSpan, Size?, ImageFormat, Screenshot> getScreenshot = result.AsyncState as Func<Rectangle, TimeSpan, Size?, ImageFormat, Screenshot>;
+        public Screenshot EndGetScreenshot(IAsyncResult result) {
+            var getScreenshot = result.AsyncState as Func<Rectangle, TimeSpan, Size?, ImageFormat, Screenshot>;
             if (getScreenshot != null)
-            {
                 return getScreenshot.EndInvoke(result);
-            }
-            else
-                return null;
+            return null;
         }
 
-        public void SendScreenshotResponse(Screenshot screenshot)
-        {
+        public void SendScreenshotResponse(Screenshot screenshot) {
             if (_requestId != null && screenshot != null && screenshot.RequestId == _requestId.Value)
-            {
                 if (_completeScreenshot != null)
-                {
                     _completeScreenshot(screenshot);
-                }
-            }
         }
 
         #endregion
 
         /// <summary>
-        /// Tell the client process to disconnect
+        ///     Tell the client process to disconnect
         /// </summary>
-        public void Disconnect()
-        {
-            SafeInvokeDisconnected();
-        }
+        public void Disconnect() => SafeInvokeDisconnected();
 
         /// <summary>
-        /// Send a message to all handlers of <see cref="CaptureInterface.RemoteMessage"/>.
+        ///     Send a message to all handlers of <see cref="CaptureInterface.RemoteMessage" />.
         /// </summary>
         /// <param name="messageType"></param>
         /// <param name="format"></param>
         /// <param name="args"></param>
-        public void Message(MessageType messageType, string format, params object[] args)
-        {
-            Message(messageType, String.Format(format, args));
-        }
+        public void Message(MessageType messageType, string format, params object[] args) => Message(messageType, string.Format(format, args));
 
-        public void Message(MessageType messageType, string message)
-        {
-            SafeInvokeMessageRecevied(new MessageReceivedEventArgs(messageType, message));
-        }
-
+        public void Message(MessageType messageType, string message) => SafeInvokeMessageRecevied(new MessageReceivedEventArgs(messageType, message));
 
         #endregion
 
         #region Private: Invoke message handlers
 
-        private void SafeInvokeMessageRecevied(MessageReceivedEventArgs eventArgs)
-        {
+        private void SafeInvokeMessageRecevied(MessageReceivedEventArgs eventArgs) {
             if (RemoteMessage == null)
-                return;         //No Listeners
+                return; //No Listeners
 
             MessageReceivedEvent listener = null;
-            Delegate[] dels = RemoteMessage.GetInvocationList();
+            var dels = RemoteMessage.GetInvocationList();
 
-            foreach (Delegate del in dels)
-            {
-                try
-                {
-                    listener = (MessageReceivedEvent)del;
+            foreach (var del in dels)
+                try {
+                    listener = (MessageReceivedEvent) del;
                     listener.Invoke(eventArgs);
-                }
-                catch (Exception)
-                {
+                } catch (Exception) {
                     //Could not reach the destination, so remove it
                     //from the list
                     RemoteMessage -= listener;
                 }
-            }
         }
 
-        private void SafeInvokeScreenshotRequested(ScreenshotRequest eventArgs)
-        {
+        private void SafeInvokeScreenshotRequested(ScreenshotRequest eventArgs) {
             if (ScreenshotRequested == null)
-                return;         //No Listeners
+                return; //No Listeners
 
             ScreenshotRequestedEvent listener = null;
-            Delegate[] dels = ScreenshotRequested.GetInvocationList();
+            var dels = ScreenshotRequested.GetInvocationList();
 
-            foreach (Delegate del in dels)
-            {
-                try
-                {
-                    listener = (ScreenshotRequestedEvent)del;
+            foreach (var del in dels)
+                try {
+                    listener = (ScreenshotRequestedEvent) del;
                     listener.Invoke(eventArgs);
-                }
-                catch (Exception)
-                {
+                } catch (Exception) {
                     //Could not reach the destination, so remove it
                     //from the list
                     ScreenshotRequested -= listener;
                 }
-            }
         }
 
-        private void SafeInvokeScreenshotReceived(ScreenshotReceivedEventArgs eventArgs)
-        {
+        private void SafeInvokeScreenshotReceived(ScreenshotReceivedEventArgs eventArgs) {
             if (ScreenshotReceived == null)
-                return;         //No Listeners
+                return; //No Listeners
 
             ScreenshotReceivedEvent listener = null;
-            Delegate[] dels = ScreenshotReceived.GetInvocationList();
+            var dels = ScreenshotReceived.GetInvocationList();
 
-            foreach (Delegate del in dels)
-            {
-                try
-                {
-                    listener = (ScreenshotReceivedEvent)del;
+            foreach (var del in dels)
+                try {
+                    listener = (ScreenshotReceivedEvent) del;
                     listener.Invoke(eventArgs);
-                }
-                catch (Exception)
-                {
+                } catch (Exception) {
                     //Could not reach the destination, so remove it
                     //from the list
                     ScreenshotReceived -= listener;
                 }
-            }
         }
 
-        private void SafeInvokeDisconnected()
-        {
+        private void SafeInvokeDisconnected() {
             if (Disconnected == null)
-                return;         //No Listeners
+                return; //No Listeners
 
             DisconnectedEvent listener = null;
-            Delegate[] dels = Disconnected.GetInvocationList();
+            var dels = Disconnected.GetInvocationList();
 
-            foreach (Delegate del in dels)
-            {
-                try
-                {
-                    listener = (DisconnectedEvent)del;
+            foreach (var del in dels)
+                try {
+                    listener = (DisconnectedEvent) del;
                     listener.Invoke();
-                }
-                catch (Exception)
-                {
+                } catch (Exception) {
                     //Could not reach the destination, so remove it
                     //from the list
                     Disconnected -= listener;
                 }
-            }
         }
 
         #endregion
-
-        /// <summary>
-        /// Used to confirm connection to IPC server channel
-        /// </summary>
-        public DateTime Ping()
-        {
-            return DateTime.Now;
-        }
     }
 
-
     /// <summary>
-    /// Client event proxy for marshalling event handlers
+    ///     Client event proxy for marshalling event handlers
     /// </summary>
-    public class ClientCaptureInterfaceEventProxy : MarshalByRefObject
-    {
-        #region Event Declarations
-
- /// <summary>
-        /// Client event used to communicate to the client that it is time to create a screenshot
-        /// </summary>
-        public event ScreenshotRequestedEvent ScreenshotRequested;
-
-        /// <summary>
-        /// Client event used to notify the hook to exit
-        /// </summary>
-        public event DisconnectedEvent Disconnected;
-
-        #endregion
-
+    public class ClientCaptureInterfaceEventProxy : MarshalByRefObject {
         #region Lifetime Services
 
-        public override object InitializeLifetimeService()
-        {
+        public override object InitializeLifetimeService() =>
             //Returning null holds the object alive
             //until it is explicitly destroyed
-            return null;
-        }
+            null;
 
         #endregion
 
-        public void DisconnectedProxyHandler()
-        {
+        public void DisconnectedProxyHandler() {
             if (Disconnected != null)
                 Disconnected();
         }
 
-        public void ScreenshotRequestedProxyHandler(ScreenshotRequest request)
-        {
+        public void ScreenshotRequestedProxyHandler(ScreenshotRequest request) {
             if (ScreenshotRequested != null)
                 ScreenshotRequested(request);
         }
+
+        #region Event Declarations
+
+        /// <summary>
+        ///     Client event used to communicate to the client that it is time to create a screenshot
+        /// </summary>
+        public event ScreenshotRequestedEvent ScreenshotRequested;
+
+        /// <summary>
+        ///     Client event used to notify the hook to exit
+        /// </summary>
+        public event DisconnectedEvent Disconnected;
+
+        #endregion
     }
 }

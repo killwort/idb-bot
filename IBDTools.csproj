@@ -66,11 +66,14 @@
           <DependentUpon>TreasureLoot.xaml</DependentUpon>
         </Compile>
         <Compile Include="VMs\ArenaWindow.cs" />
+        <Compile Include="VMs\BaseWorkerWindow.cs" />
         <Compile Include="VMs\MainWindow.cs" />
+        <Compile Include="VMs\MapperWindow.cs" />
         <Compile Include="VMs\TreasureLootWindow.cs" />
         <Compile Include="WinApi.cs" />
         <Compile Include="Workers\Arena.cs" />
         <Compile Include="Workers\IWorker.cs" />
+        <Compile Include="Workers\Mapper.cs" />
         <Compile Include="Workers\TreasureMapLooter.cs" />
     </ItemGroup>
     <ItemGroup>

@@ -2,14 +2,11 @@
 
 namespace IBDTools {
     public partial class MainWindow : Window {
-        public MainWindow() {
-            InitializeComponent();
-        }
+        public MainWindow() => InitializeComponent();
 
-        private VMs.MainWindow VM => ((VMs.MainWindow) DataContext);
-        private void MainWindow_OnLoaded(object sender, RoutedEventArgs e) {
-            VM.StartConnecting();
-        }
+        private VMs.MainWindow VM => (VMs.MainWindow) DataContext;
+
+        private void MainWindow_OnLoaded(object sender, RoutedEventArgs e) => VM.StartConnecting();
 
         private void StartArena(object sender, RoutedEventArgs e) {
             var dialog = new ArenaWindow();
