@@ -1,4 +1,10 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using IBDTools.Screens;
 
@@ -11,6 +17,58 @@ namespace IBDTools {
             }
         }
 
+        public static bool VerifyPixelColor(this Bitmap bitmap, Point point, Color color, int maxDivergence = 30) {
+            var cl = bitmap.GetPixel(point.X, point.Y);
+            return (Math.Abs(cl.B - color.B) + Math.Abs(cl.R - color.R) + Math.Abs(cl.G - color.G)) < maxDivergence;
+        }
+
+        public static Point? FindEdge(this BitmapData bmData, Point origin, Size delta, int threshold) {
+            var current = new Point(origin.X, origin.Y);
+            int prevColor = -1;
+            var ix = delta.Width == 0 ? 1 : 0;
+            var iy = ix == 0 ? 1 : 0;
+            while (current.X >= 0 && current.Y >= 0 && current.X < bmData.Width && current.Y < bmData.Height) {
+                var pixColor = Marshal.ReadInt32(bmData.Scan0 + bmData.Stride * current.Y + current.X * sizeof(int));
+                Marshal.WriteInt32(bmData.Scan0 + bmData.Stride * (iy + current.Y) + (ix + current.X) * sizeof(int), (int) ((~pixColor) | (0xff000000)));
+                if (prevColor != -1) {
+                    if (pixColor.ColorDiff(prevColor) > threshold) return current;
+                }
+
+                prevColor = pixColor;
+                current.Offset(Math.Sign(delta.Width), Math.Sign(delta.Height));
+            }
+
+            return null;
+        }
+        public static Point? FindColors(this BitmapData bmData, Point origin, Size delta, IEnumerable<int> matchColors, int threshold) {
+            var current = new Point(origin.X, origin.Y);
+            var ix = delta.Width == 0 ? 1 : 0;
+            var iy = ix == 0 ? 1 : 0;
+            while (current.X >= 0 && current.Y >= 0 && current.X < bmData.Width && current.Y < bmData.Height) {
+                var pixColor = Marshal.ReadInt32(bmData.Scan0 + bmData.Stride * current.Y + current.X * sizeof(int));
+                Marshal.WriteInt32(bmData.Scan0 + bmData.Stride * (iy + current.Y) + (ix + current.X) * sizeof(int), (int) ((~pixColor) | (0xff000000)));
+                if (matchColors.Any(x => pixColor.ColorDiff(x) < threshold)) return current;
+                current.Offset(Math.Sign(delta.Width), Math.Sign(delta.Height));
+            }
+
+            return null;
+        }
+
+        public static int ColorDiff(this Color c1, Color c2) {
+            return (Math.Abs(c1.B - c2.B) + Math.Abs(c1.R - c2.R) + Math.Abs(c1.G - c2.G));
+        }
+        public static int ColorDiff(this int c1, int c2) {
+            return Math.Abs(((c1 >> 8) & 0xff) - ((c2 >> 8) & 0xff)) + Math.Abs(((c1 >> 16) & 0xff) - ((c2 >> 16) & 0xff)) + Math.Abs(((c1) & 0xff) - ((c2) & 0xff));
+        }
+
+        public static Bitmap Extract(this Bitmap bm, Rectangle rt) {
+            var tbm = new Bitmap(rt.Size.Width, rt.Size.Height);
+            using (var dc = Graphics.FromImage(tbm)) {
+                dc.DrawImage(bm, new Rectangle(new Point(0, 0), rt.Size), rt, GraphicsUnit.Pixel);
+            }
+
+            return tbm;
+        }
         public static string Pretty(this long n) {
             var result = "";
             if (n < 0) {

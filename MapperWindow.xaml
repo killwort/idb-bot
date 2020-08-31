@@ -1,0 +1,49 @@
+﻿<w:KbHookWindow x:Class="IBDTools.MapperWindow"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:w="clr-namespace:IBDTools"
+                xmlns:local="clr-namespace:IBDTools.VMs"
+                mc:Ignorable="d"
+                x:Name="SelfWindow"
+                Title="IDB Map Scanner" Height="280" Width="400">
+    <Window.DataContext>
+        <local:MapperWindow />
+    </Window.DataContext>
+    <Grid Margin="6">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.ColumnSpan="3" TextWrapping="Wrap" Margin="6">
+            Go to the game and open world map screen, then press start button. DO NOT TOUCH THE ZOOM, bot cannot restore it! Press Ctrl+Shift+S when you want to stop.
+        </TextBlock>
+        <Label Grid.Row="1">Period (common for all)</Label>
+        <TextBox MinWidth="50" Grid.Row="1" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning, Mode=OneWay}"
+                 Text="{Binding Period, Mode=TwoWay}" VerticalContentAlignment="Center"
+                 HorizontalContentAlignment="Center" />
+        <Label Grid.Row="2">Phase (personal)</Label>
+        <TextBox MinWidth="50" Grid.Row="2" Grid.Column="1" Margin="6" IsEnabled="{Binding IsNotRunning, Mode=OneWay}"
+                 Text="{Binding Phase, Mode=TwoWay}" VerticalContentAlignment="Center"
+                 HorizontalContentAlignment="Center" />
+        <Button Grid.Row="3" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6"
+                IsEnabled="{Binding IsNotRunning, Mode=OneWay}">
+            Start
+        </Button>
+        <ProgressBar Grid.Row="4" Grid.ColumnSpan="3" Height="10" Value="{Binding Progress}"></ProgressBar>
+        <TextBlock Grid.Row="5" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6" />
+        <TextBlock Margin="6" Grid.Row="6" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
+    </Grid>
+</w:KbHookWindow>

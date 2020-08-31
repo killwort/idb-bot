@@ -41,7 +41,7 @@ namespace IBDTools {
             return true;
         }
 
-        private TesseractEngine _englishOcr, _numbersOcr;
+        private TesseractEngine _englishOcr, _englishPunctOcr, _numbersOcr;
 
         public async Task ClickAt(Point point, CancellationToken cancellationToken, int delay = 200) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", point.X, point.Y);
@@ -53,18 +53,41 @@ namespace IBDTools {
             await WinApi.SendClickAlt(_process.MainWindowHandle, x, y, 50, delay, cancellationToken);
         }
 
+        public async Task SendKeyboardString(string str, CancellationToken cancellationToken) {
+            foreach (var ch in str) {
+                var upper = Char.IsUpper(ch);
+                var keyCode = Keyboard.KeyCodes.TryGetValue(upper ? ch : Char.ToUpper(ch), out var k) ? k : Keyboard.DirectXKeyStrokes.DIK_UNKNOWN;
+                if (keyCode == Keyboard.DirectXKeyStrokes.DIK_UNKNOWN)
+                    throw new InvalidOperationException("Unsendable character " + ch);
+                Keyboard.SendKey(keyCode, false, Keyboard.InputType.Keyboard);
+                await Task.Delay(10); //Non-cancellable!
+                Keyboard.SendKey(keyCode, true, Keyboard.InputType.Keyboard);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+
         private void InitTesseract() {
             var tesseractData = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tessdata");
             _englishOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
             _englishOcr.SetVariable("tessedit_char_whitelist", "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM");
+            _englishPunctOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
+            _englishPunctOcr.SetVariable("tessedit_char_whitelist", "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM0123456789/*-+:,.%");
             _numbersOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
             _numbersOcr.SetVariable("tessedit_char_whitelist", "0123456789");
             Logger.Info("Tessract engines initialized");
         }
 
         public string TextFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var subBitmap = Extract(bm, rt))
+            using (var subBitmap = bm.Extract(rt))
             using (var page = _englishOcr.Process(subBitmap)) {
+                var text = page.GetText().Trim();
+                Logger.DebugFormat("Read \"{0}\" from bitmap rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height);
+                return text;
+            }
+        }
+        public string TextWithPunctFromBitmap(Bitmap bm, Rectangle rt) {
+            using (var subBitmap = bm.Extract(rt))
+            using (var page = _englishPunctOcr.Process(subBitmap)) {
                 var text = page.GetText().Trim();
                 Logger.DebugFormat("Read \"{0}\" from bitmap rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height);
                 return text;
@@ -74,7 +97,7 @@ namespace IBDTools {
         private static readonly Regex NumbersRegex = new Regex("[^0-9]+", RegexOptions.Compiled);
 
         public long NumberFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var subBitmap = Extract(bm, rt))
+            using (var subBitmap = bm.Extract(rt))
             using (var page = _numbersOcr.Process(subBitmap)) {
                 var text = page.GetText().Trim();
                 text = NumbersRegex.Replace(text, "");
@@ -191,15 +214,6 @@ namespace IBDTools {
             }
         }
 #endif
-
-        private static Bitmap Extract(Bitmap bm, Rectangle rt) {
-            var tbm = new Bitmap(rt.Size.Width, rt.Size.Height);
-            using (var dc = Graphics.FromImage(tbm)) {
-                dc.DrawImage(bm, new Rectangle(new Point(0, 0), rt.Size), rt, GraphicsUnit.Pixel);
-            }
-
-            return tbm;
-        }
 
         private static string SaveBitmapPart(Bitmap bm, Bitmap subbitmap) {
 #if DEBUG_SAVE_BITMAPS

@@ -49,6 +49,11 @@
         </Compile>
         <Compile Include="Extensions.cs" />
         <Compile Include="GameContext.cs" />
+        <Compile Include="KbHookWindow.cs" />
+        <Compile Include="Keyboard.cs" />
+        <Compile Include="MapperWindow.xaml.cs">
+          <DependentUpon>MapperWindow.xaml</DependentUpon>
+        </Compile>
         <Compile Include="POINT.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
@@ -63,6 +68,7 @@
         <Compile Include="Screens\VerifyByPointsScreen.cs" />
         <Compile Include="Screens\VerifyByTextScreen.cs" />
         <Compile Include="App.xaml.cs" />
+        <Compile Include="Screens\WorldMap.cs" />
         <Compile Include="TreasureLoot.xaml.cs">
           <DependentUpon>TreasureLoot.xaml</DependentUpon>
         </Compile>
@@ -109,6 +115,10 @@
       <Content Include="tessdata\eng.traineddata">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Page Include="MapperWindow.xaml">
+        <SubType>Designer</SubType>
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
       <Page Include="TreasureLoot.xaml">
         <SubType>Designer</SubType>
         <Generator>MSBuild:Compile</Generator>

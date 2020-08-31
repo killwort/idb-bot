@@ -17,5 +17,10 @@ namespace IBDTools {
             var dialog = new TreasureLootWindow();
             dialog.ShowDialog();
         }
+
+        private void StartMapper(object sender, RoutedEventArgs e) {
+            var dialog = new MapperWindow();
+            dialog.ShowDialog();
+        }
     }
 }

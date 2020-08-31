@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -7,9 +8,9 @@ using log4net;
 
 namespace IBDTools.VMs {
     public abstract class BaseWorkerWindow : DependencyObject {
-        public static readonly DependencyProperty MainMessageProperty = DependencyProperty.Register("MainMessage", typeof(string), typeof(ArenaWindow), new PropertyMetadata(default(string)));
-        public static readonly DependencyProperty StatusProperty = DependencyProperty.Register("Status", typeof(string), typeof(ArenaWindow), new PropertyMetadata(default(string)));
-        public static readonly DependencyProperty IsNotRunningProperty = DependencyProperty.Register("IsNotRunning", typeof(bool), typeof(ArenaWindow), new PropertyMetadata(true));
+        public static readonly DependencyProperty MainMessageProperty = DependencyProperty.Register("MainMessage", typeof(string), typeof(BaseWorkerWindow), new PropertyMetadata(default(string)));
+        public static readonly DependencyProperty StatusProperty = DependencyProperty.Register("Status", typeof(string), typeof(BaseWorkerWindow), new PropertyMetadata(default(string)));
+        public static readonly DependencyProperty IsNotRunningProperty = DependencyProperty.Register("IsNotRunning", typeof(bool), typeof(BaseWorkerWindow), new PropertyMetadata(true));
         private CancellationTokenSource _cancel;
         private GameContext GameContext => MainWindow.GameContext;
         public string MainMessage { get => (string) GetValue(MainMessageProperty); set => SetValue(MainMessageProperty, value); }
@@ -18,22 +19,31 @@ namespace IBDTools.VMs {
 
         protected abstract IWorker CreateWorker();
 
+        protected virtual void StatusUpdater() { }
+
         public async Task Start() {
             _cancel?.Cancel();
             _cancel = new CancellationTokenSource();
-            var worker = CreateWorker();
+            Worker = CreateWorker();
+            var updater = new Thread(StatusUpdater) {IsBackground = true};
             Dispatcher.Invoke(() => IsNotRunning = false);
             try {
-                await worker.Run(GameContext, this, s => Dispatcher.Invoke(() => Status = s), _cancel.Token);
+                updater.Start();
+                await Worker.Run(GameContext, this, s => Dispatcher.Invoke(() => Status = s), _cancel.Token);
                 Dispatcher.Invoke(() => MainMessage = "Finished!");
+                updater.Abort();
             } catch (TaskCanceledException e) {
+                updater.Abort();
                 Dispatcher.Invoke(() => MainMessage = "Cancelled!");
             } catch (Exception e) {
+                updater.Abort();
                 Dispatcher.Invoke(() => MainMessage = e.GetType().Name + ": " + e.Message);
             } finally {
                 Dispatcher.Invoke(() => IsNotRunning = true);
             }
         }
+
+        public IWorker Worker { get; private set; }
 
         public void Stop() {
             LogManager.GetLogger(GetType()).Warn("Stop event received!");

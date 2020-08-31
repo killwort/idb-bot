@@ -22,6 +22,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Grid.Column="1" Text="{Binding ConnectionStatus, Mode=OneWay}" />
@@ -32,6 +33,10 @@
         <Button Grid.Column="1" Grid.Row="3" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
                 Click="StartTreasureLoot">
             Treasure map looter
+        </Button>
+        <Button Grid.Column="1" Grid.Row="4" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
+                Click="StartMapper">
+            World map scanner
         </Button>
     </Grid>
 </Window>
