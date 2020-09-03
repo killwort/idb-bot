@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define DEBUG_SAVE_BITMAPS
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -223,8 +224,8 @@ namespace IBDTools {
             if (!Directory.Exists(basename))
                 Directory.CreateDirectory(basename);
             var id = Guid.NewGuid().ToString("N");
-            subbitmap.Save(Path.Combine(basename, id + $".part.png"), ImageFormat.Png);
-            bm.Save(Path.Combine(basename, id + ".full.png"), ImageFormat.Png);
+            subbitmap.Save(Path.Combine(basename, id + $".part.png"), System.Drawing.Imaging.ImageFormat.Png);
+            bm.Save(Path.Combine(basename, id + ".full.png"), System.Drawing.Imaging.ImageFormat.Png);
             return id;
 #else
             return string.Empty;
@@ -237,11 +238,11 @@ namespace IBDTools {
             if (!Directory.Exists(basename))
                 Directory.CreateDirectory(basename);
             var id = Guid.NewGuid().ToString("N");
-            bm.Save(Path.Combine(basename, id + ".full.png"), ImageFormat.Png);
+            bm.Save(Path.Combine(basename, id + ".full.png"), System.Drawing.Imaging.ImageFormat.Png);
             using (var tbm = new Bitmap(rt.Size.Width, rt.Size.Height)) {
                 using (var dc = Graphics.FromImage(tbm))
                     dc.DrawImage(bm, new Rectangle(new Point(0, 0), rt.Size), rt, GraphicsUnit.Pixel);
-                tbm.Save(Path.Combine(basename, id + $".({rt.X},{rt.Y})+({rt.Width},{rt.Height}).png"), ImageFormat.Png);
+                tbm.Save(Path.Combine(basename, id + $".({rt.X},{rt.Y})+({rt.Width},{rt.Height}).png"), System.Drawing.Imaging.ImageFormat.Png);
             }
 
             return id;
