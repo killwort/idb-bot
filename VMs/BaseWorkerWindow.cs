@@ -27,6 +27,7 @@ namespace IBDTools.VMs {
             Worker = CreateWorker();
             var updater = new Thread(StatusUpdater) {IsBackground = true};
             Dispatcher.Invoke(() => IsNotRunning = false);
+            var logger = LogManager.GetLogger(GetType());
             try {
                 updater.Start();
                 await Worker.Run(GameContext, this, s => Dispatcher.Invoke(() => Status = s), _cancel.Token);
@@ -37,6 +38,7 @@ namespace IBDTools.VMs {
                 Dispatcher.Invoke(() => MainMessage = "Cancelled!");
             } catch (Exception e) {
                 updater.Abort();
+                logger.Fatal("Unhandled exception in the worker!", e);
                 Dispatcher.Invoke(() => MainMessage = e.GetType().Name + ": " + e.Message);
             } finally {
                 Dispatcher.Invoke(() => IsNotRunning = true);

@@ -80,16 +80,18 @@ namespace IBDTools {
         public string TextFromBitmap(Bitmap bm, Rectangle rt) {
             using (var subBitmap = bm.Extract(rt))
             using (var page = _englishOcr.Process(subBitmap)) {
+                var id = Logger.IsDebugEnabled ? SaveBitmapPart(bm, subBitmap) : "";
                 var text = page.GetText().Trim();
-                Logger.DebugFormat("Read \"{0}\" from bitmap rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height);
+                Logger.DebugFormat("Read \"{0}\" from bitmap {5} rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, id);
                 return text;
             }
         }
         public string TextWithPunctFromBitmap(Bitmap bm, Rectangle rt) {
             using (var subBitmap = bm.Extract(rt))
             using (var page = _englishPunctOcr.Process(subBitmap)) {
+                var id = Logger.IsDebugEnabled ? SaveBitmapPart(bm, subBitmap) : "";
                 var text = page.GetText().Trim();
-                Logger.DebugFormat("Read \"{0}\" from bitmap rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height);
+                Logger.DebugFormat("Read \"{0}\" from bitmap {5} rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, id);
                 return text;
             }
         }
