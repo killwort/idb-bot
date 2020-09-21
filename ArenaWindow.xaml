@@ -8,7 +8,7 @@
                 mc:Ignorable="d"
                 x:Name="SelfWindow"
 
-                Title="IDB Arena Bot" Height="320" Width="400">
+                Title="IDB Arena Bot" Height="400" Width="400">
     <Window.Resources>
         <w:AndConverter x:Key="AndConverter"/>
     </Window.Resources>
@@ -22,6 +22,8 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -54,14 +56,46 @@
         </TextBox>
         <Label Grid.Row="2" Grid.Column="2" Margin="6">arena tickets</Label>
 
-        <CheckBox Grid.Row="3" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseHistory, Mode=TwoWay}">History-based opponent chooser</CheckBox>
-        <CheckBox Grid.Row="4" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseScore, Mode=TwoWay}">Score-based opponent chooser</CheckBox>
+        <CheckBox Grid.Row="3" Margin="6" IsChecked="{Binding UseWorstEnemy, Mode=TwoWay}" VerticalContentAlignment="Center" VerticalAlignment="Center">Worst enemy</CheckBox>
+        <Label Grid.Row="3" Grid.Column="1" Margin="16 6 6 6">Name:</Label>
+        <TextBox MinWidth="50" Grid.Row="3" Grid.Column="2" Margin="6"
+                 Text="{Binding WorstEnemy, Mode=TwoWay}" VerticalContentAlignment="Center"
+                 HorizontalContentAlignment="Center">
+            <TextBox.IsEnabled>
+                <MultiBinding Converter="{StaticResource AndConverter}" Mode="OneWay">
+                    <Binding Path="IsNotRunning" Mode="OneWay"/>
+                    <Binding Path="UseWorstEnemy" Mode="OneWay"/>
+                </MultiBinding>
+            </TextBox.IsEnabled>
+        </TextBox>
+        <CheckBox Grid.Row="4" Margin="6" IsChecked="{Binding UseWorstEnemyOnly, Mode=TwoWay}" VerticalContentAlignment="Center" VerticalAlignment="Center">
+            Worst enemy only
+            <CheckBox.IsEnabled>
+                <MultiBinding Converter="{StaticResource AndConverter}" Mode="OneWay">
+                    <Binding Path="IsNotRunning" Mode="OneWay"/>
+                    <Binding Path="UseWorstEnemy" Mode="OneWay"/>
+                </MultiBinding>
+            </CheckBox.IsEnabled>
+        </CheckBox>
+        <Label Grid.Row="4" Grid.Column="1" Margin="16 6 6 6">Max edit distance:</Label>
+        <TextBox MinWidth="50" Grid.Row="4" Grid.Column="2" Margin="6"
+                 Text="{Binding WorstEnemyMaxDistance, Mode=TwoWay}" VerticalContentAlignment="Center"
+                 HorizontalContentAlignment="Center">
+            <TextBox.IsEnabled>
+                <MultiBinding Converter="{StaticResource AndConverter}" Mode="OneWay">
+                    <Binding Path="IsNotRunning" Mode="OneWay"/>
+                    <Binding Path="UseWorstEnemy" Mode="OneWay"/>
+                </MultiBinding>
+            </TextBox.IsEnabled>
+        </TextBox>
+        <CheckBox Grid.Row="5" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseHistory, Mode=TwoWay}">History-based opponent chooser</CheckBox>
+        <CheckBox Grid.Row="6" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding UseScore, Mode=TwoWay}">Score-based opponent chooser</CheckBox>
 
-        <Button Grid.Row="5" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6"
+        <Button Grid.Row="7" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6"
                 IsEnabled="{Binding IsNotRunning}">
             Start
         </Button>
-        <TextBlock Grid.Row="6" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6" />
-        <TextBlock Margin="6" Grid.Row="7" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
+        <TextBlock Grid.Row="8" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6" />
+        <TextBlock Margin="6" Grid.Row="9" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
     </Grid>
 </w:KbHookWindow>

@@ -8,18 +8,29 @@ namespace IBDTools.VMs {
         public static readonly DependencyProperty UseHistoryProperty = DependencyProperty.Register("UseHistory", typeof(bool), typeof(ArenaWindow), new PropertyMetadata(true));
         public static readonly DependencyProperty UseScoreProperty = DependencyProperty.Register("UseScore", typeof(bool), typeof(ArenaWindow), new PropertyMetadata(false));
         public static readonly DependencyProperty LimitTicketsProperty = DependencyProperty.Register("LimitTickets", typeof(bool), typeof(ArenaWindow), new PropertyMetadata(false));
+        public static readonly DependencyProperty UseWorstEnemyProperty = DependencyProperty.Register("UseWorstEnemy", typeof(bool), typeof(ArenaWindow), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty WorstEnemyProperty = DependencyProperty.Register("WorstEnemy", typeof(string), typeof(ArenaWindow), new PropertyMetadata(default(string)));
+        public static readonly DependencyProperty UseWorstEnemyOnlyProperty = DependencyProperty.Register("UseWorstEnemyOnly", typeof(bool), typeof(ArenaWindow), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty WorstEnemyMaxDistanceProperty = DependencyProperty.Register("WorstEnemyMaxDistance", typeof(int), typeof(ArenaWindow), new PropertyMetadata(4));
         public long MaxScore { get => (long) GetValue(MaxScoreProperty); set => SetValue(MaxScoreProperty, value); }
         public long MinTickets { get => (long) GetValue(MinTicketsProperty); set => SetValue(MinTicketsProperty, value); }
         public bool UseHistory { get => (bool) GetValue(UseHistoryProperty); set => SetValue(UseHistoryProperty, value); }
         public bool UseScore { get => (bool) GetValue(UseScoreProperty); set => SetValue(UseScoreProperty, value); }
         public bool LimitTickets { get => (bool) GetValue(LimitTicketsProperty); set => SetValue(LimitTicketsProperty, value); }
+        public bool UseWorstEnemy { get { return (bool) GetValue(UseWorstEnemyProperty); } set { SetValue(UseWorstEnemyProperty, value); } }
+        public string WorstEnemy { get { return (string) GetValue(WorstEnemyProperty); } set { SetValue(WorstEnemyProperty, value); } }
+        public bool UseWorstEnemyOnly { get { return (bool) GetValue(UseWorstEnemyOnlyProperty); } set { SetValue(UseWorstEnemyOnlyProperty, value); } }
+        public int WorstEnemyMaxDistance { get { return (int) GetValue(WorstEnemyMaxDistanceProperty); } set { SetValue(WorstEnemyMaxDistanceProperty, value); } }
 
         protected override IWorker CreateWorker() =>
             new Arena {
                 MaxScore = MaxScore,
                 MinTickets = LimitTickets ? -1 : MinTickets,
                 UseHistory = UseHistory,
-                UseScore = UseScore
+                UseScore = UseScore,
+                WorstEnemy = UseWorstEnemy ? WorstEnemy : null,
+                WorstEnemyOnly = UseWorstEnemyOnly,
+                WorstEnemyMaxDist = WorstEnemyMaxDistance
             };
     }
 }

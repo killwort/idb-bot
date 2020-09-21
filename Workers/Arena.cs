@@ -17,6 +17,9 @@ namespace IBDTools.Workers {
         public long MinTickets;
         public bool UseHistory;
         public bool UseScore;
+        public string WorstEnemy;
+        public bool WorstEnemyOnly;
+        public int WorstEnemyMaxDist = 8;
 
         public async Task Run(GameContext context, BaseWorkerWindow vm, Action<string> statusUpdater, CancellationToken cancellationToken) {
             using (NDC.Push("Arena Worker")) {
@@ -26,8 +29,20 @@ namespace IBDTools.Workers {
                 var prepareBattle = new PrepareBattle(context);
                 var lastScore = 0L;
                 var lastCombatScore = 0L;
-                ArenaMatcher.Opponent lastOpponent = null;
+                Opponent lastOpponent = null;
                 var combatResults = new List<CombatLogItem>();
+                var strategies = new List<IArenaStrategy>();
+                if (!string.IsNullOrEmpty(WorstEnemy))
+                    strategies.Add(new WorstEnemyArenaStrategy(WorstEnemy, WorstEnemyOnly, WorstEnemyMaxDist));
+                if(UseHistory)
+                    strategies.Add(new HistoryArenaStrategy());
+                if (UseScore) {
+                    strategies.Add(new PowerArenaStrategy());
+                    strategies.Add(new ScoreFallbackArenaStrategy());
+                }
+
+                if (strategies.Any())
+                    strategies.Add(new PowerArenaStrategy());
                 var clog = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", "combat.jlog");
                 if (!Directory.Exists(Path.GetDirectoryName(clog)))
                     Directory.CreateDirectory(Path.GetDirectoryName(clog));
@@ -92,40 +107,24 @@ namespace IBDTools.Workers {
                         var opponentsWithHistory = matcher.Opponents.Select(
                             x => {
                                 var logs = combatLookup[x.Name].Where(l => Math.Abs(1.0 - (double) l.Power / x.Power) < .1).ToArray();
-                                return new {
-                                    Opponent = x,
-                                    AvgChange = logs.Length > 0 ? logs.Average(l => l.ScoreChange) : 0
-                                };
+                                return new OpponentWithHistory(x, logs.Length > 0 ? logs.Average(l => l.ScoreChange) : 0);
                             }
                         ).ToArray();
-                        if (UseHistory) {
-                            var knownBestOpponent = opponentsWithHistory.OrderByDescending(x => x.AvgChange).FirstOrDefault();
-                            if (knownBestOpponent != null && knownBestOpponent.AvgChange > 5) {
-                                Logger.InfoFormat("Engaging known opponent {0} with average score {1}.", knownBestOpponent.Opponent, knownBestOpponent.AvgChange);
-                                lastOpponent = knownBestOpponent.Opponent;
-                                await matcher.EngageOpponent(knownBestOpponent.Opponent, cancellationToken);
+                        var engaged = false;
+                        foreach (var strategy in strategies) {
+                            var result = strategy.SelectOpponent(opponentsWithHistory, matcher.MyPower, lobby.CurrentScore);
+                            if (result.Item1 != null) {
+                                lastOpponent = result.Item1;
+                                await matcher.EngageOpponent(result.Item1, cancellationToken);
+                                engaged = true;
                                 break;
                             }
-                        }
 
-                        var minPowerOpponent = opponentsWithHistory.Where(x => x.Opponent.Power > 0 && x.AvgChange >= 0).OrderBy(x => x.Opponent.Power).FirstOrDefault();
-                        if (minPowerOpponent != null && minPowerOpponent.Opponent.Power < 0.9 * matcher.MyPower) {
-                            Logger.InfoFormat("Engaging opponent {0} (selected by power).", minPowerOpponent);
-                            lastOpponent = minPowerOpponent.Opponent;
-                            await matcher.EngageOpponent(minPowerOpponent.Opponent, cancellationToken);
-                            break;
-                        }
-
-                        if (UseScore) {
-                            minPowerOpponent = opponentsWithHistory.Where(x => x.Opponent.Score > 0 && x.Opponent.Power < 2 * matcher.MyPower && x.AvgChange >= 0)
-                                                                   .OrderByDescending(x => x.Opponent.Score).FirstOrDefault();
-                            if (minPowerOpponent != null) {
-                                Logger.InfoFormat("Engaging opponent {0} (selected by min score).", minPowerOpponent);
-                                lastOpponent = minPowerOpponent.Opponent;
-                                await matcher.EngageOpponent(minPowerOpponent.Opponent, cancellationToken);
+                            if (!result.Item2)
                                 break;
-                            }
                         }
+
+                        if (engaged) break;
 
                         Logger.Info("Refreshing matcher as no valid opponents found.");
                         cancellationToken.ThrowIfCancellationRequested();

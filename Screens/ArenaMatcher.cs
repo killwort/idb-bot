@@ -50,14 +50,5 @@ namespace IBDTools.Screens {
 
         public Task EngageOpponent(Opponent opponent, CancellationToken cancellationToken) => Context.ClickAt(OpponentBoxes[opponent.Index].Item4, cancellationToken);
         public Task Close(CancellationToken cancellationToken) => Context.ClickAt(CloseButton, cancellationToken);
-
-        public class Opponent {
-            internal int Index;
-            public string Name;
-            public long Power;
-            public long Score;
-
-            public override string ToString() => $"{Index + 1}:{Name}: Power {Power}, Score {Score}";
-        }
     }
 }

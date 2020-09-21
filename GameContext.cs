@@ -1,4 +1,4 @@
-﻿#define DEBUG_SAVE_BITMAPS
+﻿//#define DEBUG_SAVE_BITMAPS
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -255,6 +255,11 @@ namespace IBDTools {
 
         private static Bitmap GrabWindowPart(Rectangle rt) {
             var scrn = _captureProcess.CaptureInterface.GetScreenshot(rt, TimeSpan.FromSeconds(2), null, ImageFormat.Bitmap);
+            if (scrn.Data == null) {
+                Logger.Fatal("Error fetching screenshot data");
+                return new Bitmap(1, 1);
+            }
+
             return new Bitmap(new MemoryStream(scrn.Data));
         }
     }
