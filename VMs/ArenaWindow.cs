@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using IBDTools.Workers;
+using Newtonsoft.Json.Linq;
 
 namespace IBDTools.VMs {
     public class ArenaWindow : BaseWorkerWindow {
@@ -33,8 +34,26 @@ namespace IBDTools.VMs {
                 WorstEnemyMaxDist = WorstEnemyMaxDistance
             };
 
-        protected override void LoadSettings() {
-
+        protected override void LoadSettings(JObject o) {
+            MaxScore = o["MaxScore"]?.Value<int>() ?? MaxScore;
+            MinTickets = o["MinTickets"]?.Value<int>() ?? MinTickets;
+            WorstEnemyMaxDistance = o["WorstEnemyMaxDistance"]?.Value<int>() ?? WorstEnemyMaxDistance;
+            UseWorstEnemy = o["UseWorstEnemy"]?.Value<bool>() ?? UseWorstEnemy;
+            UseHistory = o["UseHistory"]?.Value<bool>() ?? UseHistory;
+            UseScore = o["UseScore"]?.Value<bool>() ?? UseScore;
+            UseWorstEnemyOnly = o["UseHistory"]?.Value<bool>() ?? UseWorstEnemyOnly;
+            WorstEnemy = o["WorstEnemy"]?.Value<string>() ?? WorstEnemy;
         }
+
+        protected override JObject SaveSettings() => JObject.FromObject(new {
+            MaxScore,
+            MinTickets,
+            WorstEnemy,
+            WorstEnemyMaxDistance,
+            UseHistory,
+            UseScore,
+            UseWorstEnemyOnly,
+            UseWorstEnemy
+        });
     }
 }

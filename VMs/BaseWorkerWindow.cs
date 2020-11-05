@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Data;
+using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using IBDTools.Workers;
 using log4net;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace IBDTools.VMs {
     public abstract class BaseWorkerWindow : DependencyObject {
@@ -12,6 +16,7 @@ namespace IBDTools.VMs {
         public static readonly DependencyProperty StatusProperty = DependencyProperty.Register("Status", typeof(string), typeof(BaseWorkerWindow), new PropertyMetadata(default(string)));
         public static readonly DependencyProperty IsNotRunningProperty = DependencyProperty.Register("IsNotRunning", typeof(bool), typeof(BaseWorkerWindow), new PropertyMetadata(true));
         private CancellationTokenSource _cancel;
+        private string _settingsFile;
         private GameContext GameContext => MainWindow.GameContext;
         public string MainMessage { get => (string) GetValue(MainMessageProperty); set => SetValue(MainMessageProperty, value); }
         public string Status { get => (string) GetValue(StatusProperty); set => SetValue(StatusProperty, value); }
@@ -22,14 +27,20 @@ namespace IBDTools.VMs {
         protected virtual void StatusUpdater() { }
 
         public BaseWorkerWindow() {
-            LoadSettings();
+            _settingsFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), GetType().Name + ".json");
+            if (File.Exists(_settingsFile)) {
+                try {
+                    var jo=JObject.Parse(File.ReadAllText(_settingsFile));
+                    LoadSettings(jo);
+                }catch{}
+            }
         }
 
-        protected virtual void SaveSettings(){}
-        protected virtual void LoadSettings(){}
+        protected virtual JObject SaveSettings() { return new JObject();}
+        protected virtual void LoadSettings(JObject src){}
 
         public async Task Start() {
-            SaveSettings();
+            File.WriteAllText(_settingsFile, SaveSettings().ToString(Formatting.Indented));
             _cancel?.Cancel();
             _cancel = new CancellationTokenSource();
             Worker = CreateWorker();

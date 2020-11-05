@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using IBDTools.Workers;
+using Newtonsoft.Json.Linq;
 
 namespace IBDTools.VMs {
     public class CardsClaimWindow : BaseWorkerWindow {
@@ -14,5 +15,20 @@ namespace IBDTools.VMs {
         public bool ClaimStandard { get { return (bool) GetValue(ClaimStandardProperty); } set { SetValue(ClaimStandardProperty, value); } }
         public bool ClaimHeroic { get { return (bool) GetValue(ClaimHeroicProperty); } set { SetValue(ClaimHeroicProperty, value); } }
         public bool ClaimEvent { get { return (bool) GetValue(ClaimEventProperty); } set { SetValue(ClaimEventProperty, value); } }
+
+        protected override void LoadSettings(JObject o) {
+            ClaimStandard = o["ClaimStandard"]?.Value<bool>() ?? ClaimStandard;
+            ClaimHeroic = o["ClaimHeroic"]?.Value<bool>() ?? ClaimHeroic;
+            ClaimEvent = o["ClaimEvent"]?.Value<bool>() ?? ClaimEvent;
+        }
+
+        protected override JObject SaveSettings() =>
+            JObject.FromObject(
+                new {
+                    ClaimStandard,
+                    ClaimEvent,
+                    ClaimHeroic
+                }
+            );
     }
 }

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Windows;
 using IBDTools.Workers;
+using Newtonsoft.Json.Linq;
 
 namespace IBDTools.VMs {
     public class MapperWindow : BaseWorkerWindow {
@@ -34,5 +35,15 @@ namespace IBDTools.VMs {
                 );
             }
         }
+
+        protected override void LoadSettings(JObject o) {
+            Period = o["Period"]?.Value<int>() ?? Period;
+            Phase = o["Phase"]?.Value<int>() ?? Phase;
+        }
+
+        protected override JObject SaveSettings() => JObject.FromObject(new {
+            Phase,
+            Period
+        });
     }
 }
