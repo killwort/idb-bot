@@ -48,6 +48,9 @@
         <Compile Include="ArenaWindow.xaml.cs">
           <DependentUpon>ArenaWindow.xaml</DependentUpon>
         </Compile>
+        <Compile Include="CardsClaim.xaml.cs">
+          <DependentUpon>CardsClaim.xaml</DependentUpon>
+        </Compile>
         <Compile Include="Extensions.cs" />
         <Compile Include="GameContext.cs" />
         <Compile Include="KbHookWindow.cs" />
@@ -66,6 +69,7 @@
         <Compile Include="Screens\PrepareBattle.cs" />
         <Compile Include="Screens\RewardsDialog.cs" />
         <Compile Include="Screens\SnapshotOnActivationScreen.cs" />
+        <Compile Include="Screens\Tavern.cs" />
         <Compile Include="Screens\TreasureMaps.cs" />
         <Compile Include="Screens\VerifyByPointsScreen.cs" />
         <Compile Include="Screens\VerifyByTextScreen.cs" />
@@ -76,11 +80,13 @@
         </Compile>
         <Compile Include="VMs\ArenaWindow.cs" />
         <Compile Include="VMs\BaseWorkerWindow.cs" />
+        <Compile Include="VMs\CardsClaimWindow.cs" />
         <Compile Include="VMs\MainWindow.cs" />
         <Compile Include="VMs\MapperWindow.cs" />
         <Compile Include="VMs\TreasureLootWindow.cs" />
         <Compile Include="WinApi.cs" />
         <Compile Include="Workers\Arena.cs" />
+        <Compile Include="Workers\CardsClaimer.cs" />
         <Compile Include="Workers\HistoryArenaStrategy.cs" />
         <Compile Include="Workers\IArenaStrategy.cs" />
         <Compile Include="Workers\IWorker.cs" />
@@ -109,6 +115,10 @@
           <Generator>MSBuild:Compile</Generator>
       </ApplicationDefinition>
       <Page Include="ArenaWindow.xaml">
+        <SubType>Designer</SubType>
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+      <Page Include="CardsClaim.xaml">
         <SubType>Designer</SubType>
         <Generator>MSBuild:Compile</Generator>
       </Page>

@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using IBDTools.Workers;
 
 namespace IBDTools {
     public partial class MainWindow : Window {
@@ -20,6 +21,11 @@ namespace IBDTools {
 
         private void StartMapper(object sender, RoutedEventArgs e) {
             var dialog = new MapperWindow();
+            dialog.ShowDialog();
+        }
+
+        private void StartClaimer(object sender, RoutedEventArgs e) {
+            var dialog = new CardsClaimWindow();
             dialog.ShowDialog();
         }
     }

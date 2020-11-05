@@ -1,0 +1,46 @@
+﻿<w:KbHookWindow x:Class="IBDTools.CardsClaimWindow"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:w="clr-namespace:IBDTools"
+                xmlns:local="clr-namespace:IBDTools.VMs"
+                mc:Ignorable="d"
+                x:Name="SelfWindow"
+                Title="IDB Hero Cards Claimer" Height="280" Width="400">
+    <Window.DataContext>
+        <local:CardsClaimWindow />
+    </Window.DataContext>
+    <Grid Margin="6">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.ColumnSpan="3" TextWrapping="Wrap" Margin="6">
+            Go to the game and open tavern screen, then press start button. Press Ctrl+Shift+S when you want to stop.
+        </TextBlock>
+
+        <Button Grid.Row="5" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6"
+                IsEnabled="{Binding IsNotRunning, Mode=OneWay}">
+            Start
+        </Button>
+        <TextBlock Grid.Row="6" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6" />
+
+        <CheckBox Grid.ColumnSpan="2" Grid.Column="0" Grid.Row="1" Margin="6" IsChecked="{Binding ClaimStandard, Mode=TwoWay}">Claim standard cards</CheckBox>
+        <CheckBox Grid.ColumnSpan="2" Grid.Column="0" Grid.Row="2" Margin="6" IsChecked="{Binding ClaimHeroic, Mode=TwoWay}">Claim heroic cards</CheckBox>
+        <CheckBox Grid.ColumnSpan="2" Grid.Column="0" Grid.Row="3" Margin="6" IsChecked="{Binding ClaimEvent, Mode=TwoWay}">Claim event cards</CheckBox>
+
+        <TextBlock Margin="6" Grid.Row="4" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
+    </Grid>
+</w:KbHookWindow>

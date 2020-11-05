@@ -42,7 +42,7 @@ namespace IBDTools {
             return true;
         }
 
-        private TesseractEngine _englishOcr, _englishPunctOcr, _numbersOcr;
+        private TesseractEngine _englishOcr, _englishPunctOcr, _numbersOcr, _numbersScaledOcr;
 
         public async Task ClickAt(Point point, CancellationToken cancellationToken, int delay = 200) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", point.X, point.Y);
@@ -75,6 +75,8 @@ namespace IBDTools {
             _englishPunctOcr.SetVariable("tessedit_char_whitelist", "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM0123456789/*-+:,.%");
             _numbersOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
             _numbersOcr.SetVariable("tessedit_char_whitelist", "0123456789");
+            _numbersScaledOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
+            _numbersScaledOcr.SetVariable("tessedit_char_whitelist", "0123456789.,KMB");
             Logger.Info("Tessract engines initialized");
         }
 
@@ -110,6 +112,47 @@ namespace IBDTools {
 
                 Logger.DebugFormat("Read \"{0}\" as number {5} ({6}) from bitmap {7} rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, rv, success ? "successfully" : "failed", bmId);
                 return rv;
+            }
+        }
+
+        private static readonly Regex ScaledNumberRegex = new Regex("[^0-9,.MBK]+", RegexOptions.Compiled);
+        private static readonly Regex ScaledNumberParseRegex = new Regex("(?<int>[0-9]+)(,(?<dec>[0-9]+))?(?<exp>[MBK])?", RegexOptions.Compiled);
+
+        public long ScaledNumberFromBitmap(Bitmap bm, Rectangle rt) {
+            using (var subBitmap = bm.Extract(rt))
+            using (var page = _numbersScaledOcr.Process(subBitmap)) {
+                var text = page.GetText().Trim();
+                if (text.Contains(' ') && !text.Contains(',')) {
+                    var i = text.IndexOf(' ');
+                    text = text.Remove(i, 1).Insert(i, ",");
+                }
+
+                text = ScaledNumberRegex.Replace(text, "");
+                var m = ScaledNumberParseRegex.Match(text);
+                long n = 0;
+                if (m.Success) {
+                    var mul = 1;
+                    if (m.Groups["exp"].Success)
+                        switch (m.Groups["exp"].Value) {
+                            case "M":
+                                mul = 1000000;
+                                break;
+                            case "B":
+                                mul = 1000000000;
+                                break;
+                            case "K":
+                                mul = 1000;
+                                break;
+                        }
+
+                    n = long.Parse(m.Groups["int"].Value) * mul + (m.Groups["dec"].Success ? long.Parse(m.Groups["dec"].Value) * mul / (long) Math.Pow(10, m.Groups["dec"].Length) : 0);
+                }
+
+                string bmId = null;
+                if (Logger.IsDebugEnabled && (string.IsNullOrEmpty(text) )) bmId = SaveBitmapPart(bm, subBitmap);
+
+                Logger.DebugFormat("Read \"{0}\" as number {5} from bitmap {6} rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, n, bmId);
+                return n;
             }
         }
 #if false

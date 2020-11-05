@@ -32,5 +32,9 @@ namespace IBDTools.VMs {
                 WorstEnemyOnly = UseWorstEnemyOnly,
                 WorstEnemyMaxDist = WorstEnemyMaxDistance
             };
+
+        protected override void LoadSettings() {
+
+        }
     }
 }

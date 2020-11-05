@@ -21,7 +21,15 @@ namespace IBDTools.VMs {
 
         protected virtual void StatusUpdater() { }
 
+        public BaseWorkerWindow() {
+            LoadSettings();
+        }
+
+        protected virtual void SaveSettings(){}
+        protected virtual void LoadSettings(){}
+
         public async Task Start() {
+            SaveSettings();
             _cancel?.Cancel();
             _cancel = new CancellationTokenSource();
             Worker = CreateWorker();

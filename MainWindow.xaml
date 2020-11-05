@@ -23,6 +23,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Grid.Column="1" Text="{Binding ConnectionStatus, Mode=OneWay}" />
@@ -37,6 +38,10 @@
         <Button Grid.Column="1" Grid.Row="4" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
                 Click="StartMapper">
             World map scanner
+        </Button>
+        <Button Grid.Column="1" Grid.Row="5" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
+                Click="StartClaimer">
+            Hero summoner
         </Button>
     </Grid>
 </Window>
