@@ -9,9 +9,9 @@ namespace IBDTools.Screens {
         private static readonly Rectangle HeroicCardsBox = new Rectangle(460,   280, 88, 24);
         private static readonly Rectangle EventPointsBox = new Rectangle(770,   280, 88, 24);
 
-        private static readonly Point Standard1Button = new Point(184, 340);
-        private static readonly Point Heroic1Button = new Point(490, 340);
-        private static readonly Point Event1Button = new Point(810, 340);
+        private static readonly Point Standard1Button = new Point(184, 390);
+        private static readonly Point Heroic1Button = new Point(490, 390);
+        private static readonly Point Event1Button = new Point(810, 390);
 
         private static readonly Point Standard10Button = new Point(184, 460);
         private static readonly Point Heroic10Button = new Point(490, 460);
