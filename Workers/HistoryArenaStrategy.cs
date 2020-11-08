@@ -15,19 +15,25 @@ namespace IBDTools.Workers {
     }
 
     public class WorstEnemyArenaStrategy : IArenaStrategy {
-        private readonly string _worstEnemy;
+        private readonly string[] _worstEnemies;
         private readonly bool _worstEnemyOnly;
         private readonly int _maxDist;
 
         public WorstEnemyArenaStrategy(string worstEnemy, bool worstEnemyOnly, int maxDist) {
-            _worstEnemy = worstEnemy;
+            _worstEnemies = worstEnemy.Split(new[] {',', ';', '|', ' '}, StringSplitOptions.RemoveEmptyEntries);
             _worstEnemyOnly = worstEnemyOnly;
             _maxDist = maxDist;
         }
 
         public Tuple<Opponent, bool> SelectOpponent(IEnumerable<OpponentWithHistory> opponents, long myPower, long myScore) {
-            var match=opponents.FirstOrDefault(x => Extensions.DamerauLevenstein(x.Opponent.Name, _worstEnemy) < _maxDist);
-            return Tuple.Create(match?.Opponent, !_worstEnemyOnly);
+            var ops = opponents.ToArray();
+            foreach (var we in _worstEnemies) {
+                var match = ops.FirstOrDefault(x => Extensions.DamerauLevenstein(x.Opponent.Name, we) < _maxDist);
+                if(match!=null)
+                    return Tuple.Create(match?.Opponent, !_worstEnemyOnly);
+            }
+
+            return Tuple.Create((Opponent) null, !_worstEnemyOnly);
         }
     }
 }
