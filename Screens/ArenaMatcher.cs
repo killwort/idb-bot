@@ -27,7 +27,12 @@ namespace IBDTools.Screens {
 
         public long MyPower => Context.NumberFromBitmap(CurrentScreen, MyPowerBox);
         public long TicketsLeft => Context.NumberFromBitmap(CurrentScreen, TicketsLeftBox);
-        public bool IsFastBattleEnabled => CurrentScreen.GetPixel(679, 216).G > 200;
+        public bool IsFastBattleEnabled {
+            get {
+                var px=CurrentScreen.GetPixel(679, 216);
+                return px.G > 200 && px.B < 150 && px.R < 150;
+            }
+        }
 
         public Opponent[] Opponents =>
             OpponentBoxes.Select(
@@ -50,5 +55,6 @@ namespace IBDTools.Screens {
 
         public Task EngageOpponent(Opponent opponent, CancellationToken cancellationToken) => Context.ClickAt(OpponentBoxes[opponent.Index].Item4, cancellationToken);
         public Task Close(CancellationToken cancellationToken) => Context.ClickAt(CloseButton, cancellationToken);
+        public void Refresh() => CurrentScreen = Context.FullScreenshot();
     }
 }

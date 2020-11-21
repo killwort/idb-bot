@@ -92,7 +92,7 @@ namespace IBDTools.Workers {
 
                         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
                         try {
-                            await matcher.Activation(cts.Token);
+                            await matcher.Activation(CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token);
                             break;
                         } catch (TaskCanceledException) {
                             if (lobby.IsScreenActive())
@@ -113,7 +113,6 @@ namespace IBDTools.Workers {
                     }
 
                     Logger.Info("Enabling fast battle.");
-                    await matcher.ToggleFastBattle(true, cancellationToken);
 
                     statusUpdater($"My power {matcher.MyPower.Pretty()}, score {lobby.CurrentScore}. {matcher.TicketsLeft} tickets left.");
                     while (!cancellationToken.IsCancellationRequested) {
@@ -131,6 +130,9 @@ namespace IBDTools.Workers {
                             var result = strategy.SelectOpponent(opponentsWithHistory, matcher.MyPower, lobby.CurrentScore);
                             if (result.Item1 != null) {
                                 lastOpponent = result.Item1;
+                                matcher.Refresh();
+                                await matcher.ToggleFastBattle(true, cancellationToken);
+
                                 await matcher.EngageOpponent(result.Item1, cancellationToken);
                                 engaged = true;
                                 break;
@@ -145,7 +147,7 @@ namespace IBDTools.Workers {
                         Logger.Info("Refreshing matcher as no valid opponents found.");
                         cancellationToken.ThrowIfCancellationRequested();
                         await matcher.GetNewOpponents(cancellationToken);
-                        await Task.Delay(100, cancellationToken);
+                        //await Task.Delay(100, cancellationToken);
                         if (!matcher.IsScreenActive()) {
                             Logger.Fatal("Matcher screen not detected after refresh! Bailing out.");
                             throw new InvalidOperationException("Not on the arena matcher screen");
@@ -162,7 +164,13 @@ namespace IBDTools.Workers {
                     Logger.Info("Into the battle!");
                     await prepareBattle.Engage(cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
-                    await matcher.Activation(cancellationToken);
+                    var ts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    try {
+                        await matcher.Activation(CancellationTokenSource.CreateLinkedTokenSource(ts.Token, cancellationToken).Token);
+                    } catch (TaskCanceledException) {
+                        if (lobby.IsScreenActive()) continue;
+                    }
+
                     Logger.Info("Trying to close matcher.");
                     while (true) {
                         cancellationToken.ThrowIfCancellationRequested();
@@ -173,8 +181,10 @@ namespace IBDTools.Workers {
                                 break;
                             }
 
-                            await Task.Delay(500, cancellationToken);
-                        } else {
+                            await Task.Delay(200, cancellationToken);
+                        } else if (lobby.IsScreenActive()) {
+                            continue;
+                        }else{
                             Logger.Fatal("Matcher screen not detected while trying to close it! Bailing out.");
                             throw new InvalidOperationException("Not on the arena matcher screen");
                         }
