@@ -8,21 +8,17 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Capture;
-using Capture.Interface;
 using log4net;
 using Tesseract;
-using ImageFormat = Capture.Interface.ImageFormat;
 
 namespace IBDTools {
     public class GameContext {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(GameContext));
         public GameContext() => InitTesseract();
-        private static CaptureProcess _captureProcess;
 
         public bool Connect() => InitCaptureInterface();
 
-        private Process _process;
+        private static Process _process;
 
         private bool InitCaptureInterface() {
             Logger.Info("Connecting to game");
@@ -31,14 +27,6 @@ namespace IBDTools {
             Logger.InfoFormat("Found game process {0}", _process.Id);
             WinApi.SetWindowPos(_process.MainWindowHandle, IntPtr.Zero, 0, 0, 1000, 700, 2);
             Logger.Info("Game window size reset");
-            var cc = new CaptureConfig {
-                Direct3DVersion = Direct3DVersion.AutoDetect,
-                ShowOverlay = false
-            };
-            var captureInterface = new CaptureInterface();
-            Logger.Info("Capture interface initialized");
-            _captureProcess = new CaptureProcess(_process, cc, captureInterface);
-            Logger.Info("Process hooked, ready to get screenshots");
             return true;
         }
 
@@ -69,19 +57,35 @@ namespace IBDTools {
 
         private void InitTesseract() {
             var tesseractData = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tessdata");
-            _englishOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
+            _englishOcr = new TesseractEngine(tesseractData, "eng", EngineMode.TesseractAndLstm);
+            _englishOcr.DefaultPageSegMode = PageSegMode.SingleLine;
             _englishOcr.SetVariable("tessedit_char_whitelist", "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM");
-            _englishPunctOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
+            _englishOcr.SetVariable("tessedit_zero_rejection", true);
+            _englishOcr.SetVariable("load_freq_dawg", false);
+            _englishOcr.SetVariable("load_system_dawg", false);
+            _englishPunctOcr = new TesseractEngine(tesseractData, "eng", EngineMode.TesseractAndLstm);
+            _englishPunctOcr.DefaultPageSegMode = PageSegMode.SingleLine;
             _englishPunctOcr.SetVariable("tessedit_char_whitelist", "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM0123456789/*-+:,.%");
-            _numbersOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
+            _englishPunctOcr.SetVariable("tessedit_zero_rejection", true);
+            _englishPunctOcr.SetVariable("load_freq_dawg", false);
+            _englishPunctOcr.SetVariable("load_system_dawg", false);
+            _numbersOcr = new TesseractEngine(tesseractData, "eng", EngineMode.TesseractAndLstm);
+            _numbersOcr.DefaultPageSegMode = PageSegMode.SingleLine;
             _numbersOcr.SetVariable("tessedit_char_whitelist", "0123456789");
-            _numbersScaledOcr = new TesseractEngine(tesseractData, "eng", EngineMode.LstmOnly);
+            _numbersOcr.SetVariable("tessedit_zero_rejection", true);
+            _numbersOcr.SetVariable("load_freq_dawg", false);
+            _numbersOcr.SetVariable("load_system_dawg", false);
+            _numbersScaledOcr = new TesseractEngine(tesseractData, "eng", EngineMode.TesseractAndLstm);
+            _numbersScaledOcr.DefaultPageSegMode = PageSegMode.SingleLine;
             _numbersScaledOcr.SetVariable("tessedit_char_whitelist", "0123456789.,KMB");
+            _numbersScaledOcr.SetVariable("tessedit_zero_rejection", true);
+            _numbersScaledOcr.SetVariable("load_freq_dawg", false);
+            _numbersScaledOcr.SetVariable("load_system_dawg", false);
             Logger.Info("Tessract engines initialized");
         }
 
         public string TextFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var subBitmap = bm.Extract(rt))
+            using (var subBitmap = bm.ExtractTrim(rt).Normalize())
             using (var page = _englishOcr.Process(subBitmap)) {
                 var id = Logger.IsDebugEnabled ? SaveBitmapPart(bm, subBitmap) : "";
                 var text = page.GetText().Trim();
@@ -90,7 +94,7 @@ namespace IBDTools {
             }
         }
         public string TextWithPunctFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var subBitmap = bm.Extract(rt))
+            using (var subBitmap = bm.ExtractTrim(rt).Normalize())
             using (var page = _englishPunctOcr.Process(subBitmap)) {
                 var id = Logger.IsDebugEnabled ? SaveBitmapPart(bm, subBitmap) : "";
                 var text = page.GetText().Trim();
@@ -102,7 +106,7 @@ namespace IBDTools {
         private static readonly Regex NumbersRegex = new Regex("[^0-9]+", RegexOptions.Compiled);
 
         public long NumberFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var subBitmap = bm.Extract(rt))
+            using (var subBitmap = bm.ExtractTrim(rt).Normalize())
             using (var page = _numbersOcr.Process(subBitmap)) {
                 var text = page.GetText().Trim();
                 text = NumbersRegex.Replace(text, "");
@@ -119,7 +123,7 @@ namespace IBDTools {
         private static readonly Regex ScaledNumberParseRegex = new Regex("(?<int>[0-9]+)(,(?<dec>[0-9]+))?(?<exp>[MBK])?", RegexOptions.Compiled);
 
         public long ScaledNumberFromBitmap(Bitmap bm, Rectangle rt) {
-            using (var subBitmap = bm.Extract(rt))
+            using (var subBitmap = bm.ExtractTrim(rt).Normalize())
             using (var page = _numbersScaledOcr.Process(subBitmap)) {
                 var text = page.GetText().Trim();
                 if (text.Contains(' ') && !text.Contains(',')) {
@@ -294,16 +298,17 @@ namespace IBDTools {
 #endif
         }
 
-        public Bitmap FullScreenshot() => GrabWindowPart(Rectangle.Empty);
+        public Bitmap FullScreenshot() => CaptureWindow(_process.MainWindowHandle);
 
-        private static Bitmap GrabWindowPart(Rectangle rt) {
-            var scrn = _captureProcess.CaptureInterface.GetScreenshot(rt, TimeSpan.FromSeconds(2), null, ImageFormat.Bitmap);
-            if (scrn.Data == null) {
-                Logger.Fatal("Error fetching screenshot data");
-                return new Bitmap(1, 1);
-            }
-
-            return new Bitmap(new MemoryStream(scrn.Data));
+        private static Bitmap CaptureWindow(IntPtr hwnd) {
+            WinApi.GetClientRect(hwnd, out var clientRect);
+            var pt = new POINT();
+            var bm = new Bitmap(clientRect.Width,clientRect.Height);
+            WinApi.ClientToScreen(hwnd, ref pt);
+            using (var dc = Graphics.FromImage(bm))
+                dc.CopyFromScreen(pt.X, pt.Y, 0, 0, clientRect.Size);
+            return bm;
         }
+
     }
 }

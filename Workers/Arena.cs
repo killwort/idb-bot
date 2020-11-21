@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Markup;
 using IBDTools.Screens;
 using IBDTools.VMs;
 using log4net;
@@ -83,8 +85,22 @@ namespace IBDTools.Workers {
                     lastScore = lobby.CurrentScore;
                     cancellationToken.ThrowIfCancellationRequested();
                     Logger.Info("Switching to matcher screen.");
-                    await lobby.PressBattleButton(cancellationToken);
-                    await matcher.Activation(cancellationToken);
+                    while (true) {
+                        do {
+                            await lobby.PressBattleButton(cancellationToken);
+                        } while (lobby.IsScreenActive());
+
+                        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+                        try {
+                            await matcher.Activation(cts.Token);
+                            break;
+                        } catch (TaskCanceledException) {
+                            if (lobby.IsScreenActive())
+                                continue;
+                            throw;
+                        }
+                    }
+
                     if (matcher.TicketsLeft == 0) {
                         await Task.Delay(500, cancellationToken);
                         Logger.Info("Recapture matcher screen due to possible erratic tickets reading.");
