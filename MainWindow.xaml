@@ -24,6 +24,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Grid.Column="1" Text="{Binding ConnectionStatus, Mode=OneWay}" />
@@ -42,6 +43,10 @@
         <Button Grid.Column="1" Grid.Row="5" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
                 Click="StartClaimer">
             Hero summoner
+        </Button>
+        <Button Grid.Column="1" Grid.Row="6" Padding="6" IsEnabled="{Binding IsConnectedToGame, Mode=OneWay}"
+                Click="StartEnergyBuster">
+            Event hall buster
         </Button>
     </Grid>
 </Window>

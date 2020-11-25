@@ -28,5 +28,11 @@ namespace IBDTools {
             var dialog = new CardsClaimWindow();
             dialog.ShowDialog();
         }
+
+        private void StartEnergyBuster(object sender, RoutedEventArgs e) {
+            var dialog = new EnergyBusterWindow();
+            dialog.ShowDialog();
+        }
+
     }
 }

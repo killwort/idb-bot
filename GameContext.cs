@@ -301,6 +301,7 @@ namespace IBDTools {
         public Bitmap FullScreenshot() => CaptureWindow(_process.MainWindowHandle);
 
         private static Bitmap CaptureWindow(IntPtr hwnd) {
+            WinApi.BringWindowToTop(hwnd);
             WinApi.GetClientRect(hwnd, out var clientRect);
             var pt = new POINT();
             var bm = new Bitmap(clientRect.Width,clientRect.Height);

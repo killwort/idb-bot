@@ -51,6 +51,9 @@
         <Compile Include="CardsClaim.xaml.cs">
           <DependentUpon>CardsClaim.xaml</DependentUpon>
         </Compile>
+        <Compile Include="EnergyBusterWindowWindow.xaml.cs">
+          <DependentUpon>EnergyBusterWindow.xaml</DependentUpon>
+        </Compile>
         <Compile Include="Extensions.cs" />
         <Compile Include="GameContext.cs" />
         <Compile Include="KbHookWindow.cs" />
@@ -64,13 +67,22 @@
         <Compile Include="RECT.cs" />
         <Compile Include="Screens\ArenaLobby.cs" />
         <Compile Include="Screens\ArenaMatcher.cs" />
+        <Compile Include="Screens\BarterEvent.cs" />
+        <Compile Include="Screens\BossEvent.cs" />
+        <Compile Include="Screens\ChestEvent.cs" />
+        <Compile Include="Screens\EscortEvent.cs" />
+        <Compile Include="Screens\Event.cs" />
+        <Compile Include="Screens\EventHall.cs" />
+        <Compile Include="Screens\ExchangeEvent.cs" />
         <Compile Include="Screens\IScreen.cs" />
         <Compile Include="Screens\Opponent.cs" />
         <Compile Include="Screens\PrepareBattle.cs" />
         <Compile Include="Screens\RewardsDialog.cs" />
+        <Compile Include="Screens\ShopEvent.cs" />
         <Compile Include="Screens\SnapshotOnActivationScreen.cs" />
         <Compile Include="Screens\Tavern.cs" />
         <Compile Include="Screens\TreasureMaps.cs" />
+        <Compile Include="Screens\UnknownEvent.cs" />
         <Compile Include="Screens\VerifyByPointsScreen.cs" />
         <Compile Include="Screens\VerifyByTextScreen.cs" />
         <Compile Include="App.xaml.cs" />
@@ -81,6 +93,7 @@
         <Compile Include="VMs\ArenaWindow.cs" />
         <Compile Include="VMs\BaseWorkerWindow.cs" />
         <Compile Include="VMs\CardsClaimWindow.cs" />
+        <Compile Include="VMs\EnergyBusterWindow.cs" />
         <Compile Include="VMs\MainWindow.cs" />
         <Compile Include="VMs\MapperWindow.cs" />
         <Compile Include="VMs\TreasureLootWindow.cs" />
@@ -94,6 +107,7 @@
         <Compile Include="Workers\OpponentWithHistory.cs" />
         <Compile Include="Workers\PowerArenaStrategy.cs" />
         <Compile Include="Workers\ScoreFallbackArenaStrategy.cs" />
+        <Compile Include="Workers\EnergyBuster.cs" />
         <Compile Include="Workers\TreasureMapLooter.cs" />
     </ItemGroup>
     <ItemGroup>
@@ -116,6 +130,10 @@
         <SubType>Designer</SubType>
         <Generator>MSBuild:Compile</Generator>
       </Page>
+      <Page Include="EnergyBusterWindow.xaml">
+        <SubType>Designer</SubType>
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
       <Page Include="MainWindow.xaml">
           <SubType>Designer</SubType>
           <Generator>MSBuild:Compile</Generator>
@@ -123,6 +141,9 @@
       <Compile Include="MainWindow.xaml.cs">
         <DependentUpon>MainWindow.xaml</DependentUpon>
       </Compile>
+      <Content Include="eventhall.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <Content Include="tessdata\eng.traineddata">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
