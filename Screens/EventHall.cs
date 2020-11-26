@@ -88,6 +88,7 @@ namespace IBDTools.Screens {
 
         public Event[] Events {
             get {
+                Context.MoveCursor(1, 1);
                 var emptyData = EmptyMap.LockBits(new Rectangle(0, 0, EmptyMap.Width, EmptyMap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                 var screenData = CurrentScreen.LockBits(new Rectangle(0, 0, EmptyMap.Width, EmptyMap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                 var blobBoxes = new List<BoundingBox>();
@@ -158,18 +159,18 @@ namespace IBDTools.Screens {
             for (var x = rt.Width / 4; x < rt.Width - 4; x += rt.Width / 4)
                 cPoints[i++] = CurrentScreen.GetPixel(rt.Left + x, rt.Top + y).ToArgb();
 
-            if (MatchPoints(cPoints, ChestEvent.ColorPoints, 4) || MatchPoints(cPoints, ChestEvent.ColorPoints1) || MatchPoints(cPoints, ChestEvent.ColorPoints4))
+            if (BossEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
+                return new BossEvent(rt);
+            if (ChestEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
                 return new ChestEvent(rt);
             if (MatchPoints(cPoints, BarterEvent.ColorPoints,7))
                 return new BarterEvent(rt);
-            if (MatchPoints(cPoints, ShopEvent.ColorPoints))
+            if (ShopEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
                 return new ShopEvent(rt);
             if (MatchPoints(cPoints, ExchangeEvent.ColorPoints))
                 return new ExchangeEvent(rt);
-            if (MatchPoints(cPoints, EscortEvent.ColorPoints))
+            if (EscortEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
                 return new EscortEvent(rt);
-            if (MatchPoints(cPoints, BossEvent.ColorPoints))
-                return new BossEvent(rt);
 
             using (var sbm = new Bitmap(boundingBox.Width, boundingBox.Height)) {
                 using (var dc = Graphics.FromImage(sbm)) {

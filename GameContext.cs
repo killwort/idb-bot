@@ -1,4 +1,5 @@
 ﻿//#define DEBUG_SAVE_BITMAPS
+
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -40,6 +41,11 @@ namespace IBDTools {
         public async Task ClickAt(int x, int y, CancellationToken cancellationToken, int delay = 200) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", x, y);
             await WinApi.SendClickAlt(_process.MainWindowHandle, x, y, 50, delay, cancellationToken);
+        }
+
+        public void MoveCursor(int x, int y) {
+            Logger.DebugFormat("Simulate click at ({0}, {1})", x, y);
+            WinApi.MoveCursor(_process.MainWindowHandle, x, y);
         }
 
         public async Task SendKeyboardString(string str, CancellationToken cancellationToken) {
@@ -93,6 +99,7 @@ namespace IBDTools {
                 return text;
             }
         }
+
         public string TextWithPunctFromBitmap(Bitmap bm, Rectangle rt) {
             using (var subBitmap = bm.ExtractTrim(rt).Normalize())
             using (var page = _englishPunctOcr.Process(subBitmap)) {
@@ -153,7 +160,7 @@ namespace IBDTools {
                 }
 
                 string bmId = null;
-                if (Logger.IsDebugEnabled && (string.IsNullOrEmpty(text) )) bmId = SaveBitmapPart(bm, subBitmap);
+                if (Logger.IsDebugEnabled && (string.IsNullOrEmpty(text))) bmId = SaveBitmapPart(bm, subBitmap);
 
                 Logger.DebugFormat("Read \"{0}\" as number {5} from bitmap {6} rect ({1}, {2})+({3}, {4})", text, rt.X, rt.Y, rt.Width, rt.Height, n, bmId);
                 return n;
@@ -304,12 +311,11 @@ namespace IBDTools {
             WinApi.BringWindowToTop(hwnd);
             WinApi.GetClientRect(hwnd, out var clientRect);
             var pt = new POINT();
-            var bm = new Bitmap(clientRect.Width,clientRect.Height);
+            var bm = new Bitmap(clientRect.Width, clientRect.Height);
             WinApi.ClientToScreen(hwnd, ref pt);
             using (var dc = Graphics.FromImage(bm))
                 dc.CopyFromScreen(pt.X, pt.Y, 0, 0, clientRect.Size);
             return bm;
         }
-
     }
 }

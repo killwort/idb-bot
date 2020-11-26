@@ -47,6 +47,15 @@ namespace IBDTools {
                 await Task.Delay(delayAfterClick, cancellationToken);
         }
 
+        public static void MoveCursor(IntPtr hWnd, int PositionX, int PositionY) {
+            BringWindowToTop(hWnd);
+            var pt = new POINT();
+            ClientToScreen(hWnd, ref pt);
+            PositionX += pt.X;
+            PositionY += pt.Y;
+            SetCursorPos(PositionX, PositionY);
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
@@ -82,28 +91,44 @@ namespace IBDTools {
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, int nFlags);
+
         [DllImport("user32.dll")]
         public static extern IntPtr GetDesktopWindow();
+
         [DllImport("user32.dll")]
         public static extern IntPtr GetWindowDC(IntPtr hWnd);
+
         [DllImport("user32.dll")]
-        public static extern IntPtr ReleaseDC(IntPtr hWnd,IntPtr hDC);
+        public static extern IntPtr ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
         public const int SRCCOPY = 0x00CC0020; // BitBlt dwRop parameter
+
         [DllImport("gdi32.dll")]
-        public static extern bool BitBlt(IntPtr hObject,int nXDest,int nYDest,
-                                         int nWidth,int nHeight,IntPtr hObjectSource,
-                                         int nXSrc,int nYSrc,int dwRop);
+        public static extern bool BitBlt(IntPtr hObject,
+                                         int nXDest,
+                                         int nYDest,
+                                         int nWidth,
+                                         int nHeight,
+                                         IntPtr hObjectSource,
+                                         int nXSrc,
+                                         int nYSrc,
+                                         int dwRop);
+
         [DllImport("gdi32.dll")]
-        public static extern IntPtr CreateCompatibleBitmap(IntPtr hDC,int nWidth,
-                                                           int nHeight);
+        public static extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int nWidth, int nHeight);
+
         [DllImport("gdi32.dll")]
         public static extern IntPtr CreateCompatibleDC(IntPtr hDC);
+
         [DllImport("gdi32.dll")]
         public static extern bool DeleteDC(IntPtr hDC);
+
         [DllImport("gdi32.dll")]
         public static extern bool DeleteObject(IntPtr hObject);
+
         [DllImport("gdi32.dll")]
-        public static extern IntPtr SelectObject(IntPtr hDC,IntPtr hObject);
+        public static extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject);
+
         public static Bitmap PrintWindow(IntPtr hwnd) {
             RECT rc;
             GetWindowRect(hwnd, out rc);
