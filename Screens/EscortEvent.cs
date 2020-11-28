@@ -78,7 +78,13 @@ namespace IBDTools.Screens {
                 //Fuck, we've mistaken, it is a boss event!
                 await context.ClickAt(600, 430, cancellationToken);
                 await Task.Delay(200, cancellationToken);
-                await battle.Activation(cancellationToken);
+                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                try {
+                    await battle.Activation(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token).Token);
+                } catch (TaskCanceledException) {
+                    await TryClose(context, cancellationToken);
+                    return;
+                }
             }
 
             await battle.Engage(cancellationToken);

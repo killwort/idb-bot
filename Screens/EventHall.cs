@@ -83,7 +83,7 @@ namespace IBDTools.Screens {
             }
 
             public bool Contains(BoundingBox other) => Contains(other.Left, other.Top) && Contains(other.Right, other.Bottom);
-            public Rectangle ToRectangle() => new(Left, Top, Width, Height);
+            public Rectangle ToRectangle() => new Rectangle(Left, Top, Width, Height);
         }
 
         public Event[] Events {
@@ -143,6 +143,8 @@ namespace IBDTools.Screens {
                 return blobBoxes.Where(x => x.Width > 70 && x.Height > 50 && x.Width < 150).Select(x => ToEvent(x)).ToArray();
             }
         }
+
+        public Bitmap Screen => CurrentScreen;
 
         public Task ResolveEvent(Event ev, CancellationToken token) => ev.ResolveEvent(this, this.Context, token);
 

@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -73,7 +74,14 @@ namespace IBDTools.Screens {
             await context.ClickAt(600, 430, cancellationToken);
             await Task.Delay(200, cancellationToken);
             var battle = new PrepareBattle(context);
-            await battle.Activation(cancellationToken);
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            try {
+                await battle.Activation(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token).Token);
+            } catch (TaskCanceledException) {
+                await TryClose(context, cancellationToken);
+                return;
+            }
+
             await battle.Engage(cancellationToken);
             await Task.Delay(3000, cancellationToken);
         }

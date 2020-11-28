@@ -27,5 +27,6 @@ namespace IBDTools.Screens {
         }
 
         public virtual bool Ignore => false;
+        protected Task TryClose(GameContext context, CancellationToken cancellationToken) => context.ClickAt(905, 106, cancellationToken);
     }
 }
