@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,10 +12,9 @@ using System.Threading.Tasks;
 using Image = System.Drawing.Image;
 
 namespace IBDTools.Screens {
-
-
     public class EventHall : VerifyByPointsScreen {
         private static Bitmap EmptyMap;
+        private static List<(uint[], Type)> EventTypeDetectors;
         private static readonly Point FindMoreButton = new Point(490, 590);
         private static readonly Point FindMoreDialogButton = new Point(330, 435);
 
@@ -24,27 +24,42 @@ namespace IBDTools.Screens {
                 CurrentScreen = Context.FullScreenshot();
             }
         }
+
         public bool IsFastBattleEnabled {
             get {
-                var px=CurrentScreen.GetPixel(26, 498);
+                var px = CurrentScreen.GetPixel(26, 498);
                 return 0x35e446.ColorDiff(px.ToArgb()) < 32;
             }
         }
+
         public async Task FindMoreEvents(CancellationToken cancellationToken) {
             await Context.ClickAt(FindMoreButton, cancellationToken);
-            await Task.Delay(300, cancellationToken);
             CurrentScreen.Dispose();
             CurrentScreen = Context.FullScreenshot();
             var pix = CurrentScreen.GetPixel(FindMoreDialogButton.X, FindMoreDialogButton.Y).ToArgb();
             if (0xa26852.ColorDiff(pix) < 32) {
                 await Context.ClickAt(FindMoreDialogButton, cancellationToken);
-                await Task.Delay(300, cancellationToken);
+                await Task.Delay(200, cancellationToken);
             }
         }
 
         public EventHall(GameContext context) : base(context) {
             if (EmptyMap == null) {
                 EmptyMap = (Bitmap) Image.FromFile(Path.Combine(Path.GetDirectoryName(typeof(EventHall).Assembly.Location), "eventhall.png"));
+            }
+
+            if (EventTypeDetectors == null) {
+                EventTypeDetectors = new List<(uint[], Type)>();
+                using (var reader = File.OpenText(Path.Combine(Path.GetDirectoryName(typeof(EventHall).Assembly.Location), "eventData.txt"))) {
+                    string line;
+                    while ((line = reader.ReadLine()) != null) {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        var items = line.Split('\t');
+                        var t = Type.GetType("IBDTools.Screens." + items[0], false, true);
+                        if (t == null) continue;
+                        EventTypeDetectors.Add((items.Skip(1).Select(x => uint.Parse(x.Substring(2), NumberStyles.HexNumber)).ToArray(), t));
+                    }
+                }
             }
         }
 
@@ -89,6 +104,7 @@ namespace IBDTools.Screens {
         public Event[] Events {
             get {
                 Context.MoveCursor(1, 1);
+                CurrentScreen = Context.FullScreenshot();
                 var emptyData = EmptyMap.LockBits(new Rectangle(0, 0, EmptyMap.Width, EmptyMap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                 var screenData = CurrentScreen.LockBits(new Rectangle(0, 0, EmptyMap.Width, EmptyMap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                 var blobBoxes = new List<BoundingBox>();
@@ -155,49 +171,52 @@ namespace IBDTools.Screens {
             if (boundingBox.Bottom == 474 || boundingBox.Bottom == 474)
                 boundingBox.Bottom = boundingBox.Top + 85;
             var rt = boundingBox.ToRectangle();
-            var cPoints = new int[9];
-            var i = 0;
-            for (var y = rt.Height / 4; y < rt.Height - 4; y += rt.Height / 4)
-            for (var x = rt.Width / 4; x < rt.Width - 4; x += rt.Width / 4)
-                cPoints[i++] = CurrentScreen.GetPixel(rt.Left + x, rt.Top + y).ToArgb();
+            var smallRt = boundingBox.ToRectangle();
+            smallRt.Inflate(-rt.Width / 4, -rt.Height / 4);
 
-            if (BossEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
-                return new BossEvent(rt);
-            if (ChestEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
-                return new ChestEvent(rt);
-            if (MatchPoints(cPoints, BarterEvent.ColorPoints,7))
-                return new BarterEvent(rt);
-            if (ShopEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
-                return new ShopEvent(rt);
-            if (MatchPoints(cPoints, ExchangeEvent.ColorPoints))
-                return new ExchangeEvent(rt);
-            if (EscortEvent.ColorPoints.Any(x=>MatchPoints(cPoints,x)))
-                return new EscortEvent(rt);
+            var nstep = 6;
+            var xstep = smallRt.Width / nstep;
+            var ystep = smallRt.Height / nstep;
+            var epsilon = 1;
+            var nPoints = (2 * epsilon + 1) * (2 * epsilon + 1);
+            var blends = new List<int>();
+            for (var y = ystep; y <= smallRt.Height - nstep; y += ystep)
+            for (var x = xstep; x <= smallRt.Width - nstep; x += xstep) {
+                uint rb = 0, gb = 0, bb = 0;
+                for (var xx = x - epsilon; xx <= x + epsilon; xx++)
+                for (var yy = y - epsilon; yy <= y + epsilon; yy++) {
+                    var px = CurrentScreen.GetPixel(smallRt.Left + xx, smallRt.Top + yy);
+                    rb += px.R;
+                    gb += px.G;
+                    bb += px.B;
+                }
+
+                blends.Add((int) (((uint) (((rb / nPoints) & 0xffu) << 16)) | ((uint) (((gb / nPoints) & 0xffu) << 8)) | ((uint) (((bb / nPoints) & 0xffu)))));
+            }
+
+            var matches = EventTypeDetectors.Select(
+                colors => {
+                    long d = 0;
+                    if (colors.Item1.Length != blends.Count()) return (long.MaxValue, colors.Item1, colors.Item2);
+                    for (var i = 0; i < colors.Item1.Length; i++)
+                        d += blends[i].ColorDiff((int) colors.Item1[i]);
+                    return (d, colors.Item1, colors.Item2);
+                }
+            ).Where(x => x.Item1 < 3500).OrderBy(x => x.Item1).ToArray();
+            var match = matches.FirstOrDefault();
+            if (match.Item3 != null)
+                return (Event) Activator.CreateInstance(match.Item3, rt);
 
             using (var sbm = new Bitmap(boundingBox.Width, boundingBox.Height)) {
                 using (var dc = Graphics.FromImage(sbm)) {
                     dc.DrawImage(CurrentScreen, 0, 0, rt, GraphicsUnit.Pixel);
                 }
 
-                var file = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", $"unknown-event-{string.Join("-", cPoints.Select(x => x.ToString("x8")))}.bmp");
-
+                var file = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs", $"unknown-event-{string.Join("-", blends.Select(x => x.ToString("x8")))}.bmp");
                 sbm.Save(file);
-
             }
+
             return new UnknownEvent(rt);
-        }
-
-        private bool MatchPoints(int[] imagePoints, uint[] refPoints, int consensus = -1) {
-            int matches = 0, ignores = 0;
-            for (var i = 0; i < 9; i++) {
-                if ((refPoints[i] >> 24) == 0xff)
-                    ignores++;
-                else if (imagePoints[i].ColorDiff((int) (refPoints[i] & 0xffffff)) < (refPoints[i] >> 24) * 3)
-                    matches++;
-            }
-
-            if (consensus == -1) consensus = Math.Max(1, 8 - ignores);
-            return matches >= consensus;
         }
     }
 }

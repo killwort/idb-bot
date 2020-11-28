@@ -67,9 +67,7 @@ namespace IBDTools.Screens {
 
         public override async Task ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
             await Activate(context, cancellationToken);
-            await Task.Delay(200, cancellationToken);
             await context.ClickAt(DialogButton1, cancellationToken);
-            await Task.Delay(200, cancellationToken);
             var battle = new PrepareBattle(context);
             var ct = new CancellationTokenSource(TimeSpan.FromSeconds(3));
             try {
@@ -77,7 +75,6 @@ namespace IBDTools.Screens {
             } catch (TaskCanceledException) {
                 //Fuck, we've mistaken, it is a boss event!
                 await context.ClickAt(600, 430, cancellationToken);
-                await Task.Delay(200, cancellationToken);
                 var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
                 try {
                     await battle.Activation(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token).Token);
@@ -88,7 +85,7 @@ namespace IBDTools.Screens {
             }
 
             await battle.Engage(cancellationToken);
-            await Task.Delay(3000, cancellationToken);
+            await WaitCombatEnd(context, cancellationToken);
         }
     }
 }

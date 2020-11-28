@@ -35,12 +35,12 @@ namespace IBDTools {
 
         public async Task ClickAt(Point point, CancellationToken cancellationToken, int delay = 200) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", point.X, point.Y);
-            await WinApi.SendClickAlt(_process.MainWindowHandle, point.X, point.Y, 50, delay, cancellationToken);
+            await WinApi.SendClickAlt(_process.MainWindowHandle, point.X, point.Y, 70, delay, cancellationToken);
         }
 
         public async Task ClickAt(int x, int y, CancellationToken cancellationToken, int delay = 200) {
             Logger.DebugFormat("Simulate click at ({0}, {1})", x, y);
-            await WinApi.SendClickAlt(_process.MainWindowHandle, x, y, 50, delay, cancellationToken);
+            await WinApi.SendClickAlt(_process.MainWindowHandle, x, y, 70, delay, cancellationToken);
         }
 
         public void MoveCursor(int x, int y) {

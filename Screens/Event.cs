@@ -28,5 +28,15 @@ namespace IBDTools.Screens {
 
         public virtual bool Ignore => false;
         protected Task TryClose(GameContext context, CancellationToken cancellationToken) => context.ClickAt(905, 106, cancellationToken);
+
+        protected async Task WaitCombatEnd(GameContext context, CancellationToken cancellationToken) {
+            await Task.Delay(200, cancellationToken);
+            while (true)
+                using (var bmp = context.FullScreenshot()) {
+                    var cl = bmp.GetPixel(442, 350).ToArgb();
+                    if (cl.ColorDiff(0x302c37) > 32 && cl.ColorDiff(0x18c321) > 32) break;
+                    await Task.Delay(200, cancellationToken);
+                }
+        }
     }
 }
