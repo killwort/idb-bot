@@ -14,7 +14,7 @@ using Image = System.Drawing.Image;
 namespace IBDTools.Screens {
     public class EventHall : VerifyByPointsScreen {
         private static Bitmap EmptyMap;
-        private static List<(uint[], Type)> EventTypeDetectors;
+        private static List<Tuple<uint[], Type>> EventTypeDetectors;
         private static readonly Point FindMoreButton = new Point(490, 590);
         private static readonly Point FindMoreDialogButton = new Point(330, 435);
 
@@ -49,7 +49,7 @@ namespace IBDTools.Screens {
             }
 
             if (EventTypeDetectors == null) {
-                EventTypeDetectors = new List<(uint[], Type)>();
+                EventTypeDetectors = new List<Tuple<uint[], Type>>();
                 using (var reader = File.OpenText(Path.Combine(Path.GetDirectoryName(typeof(EventHall).Assembly.Location), "eventData.txt"))) {
                     string line;
                     while ((line = reader.ReadLine()) != null) {
@@ -57,7 +57,7 @@ namespace IBDTools.Screens {
                         var items = line.Split('\t');
                         var t = Type.GetType("IBDTools.Screens." + items[0], false, true);
                         if (t == null) continue;
-                        EventTypeDetectors.Add((items.Skip(1).Select(x => uint.Parse(x.Substring(2), NumberStyles.HexNumber)).ToArray(), t));
+                        EventTypeDetectors.Add(Tuple.Create(items.Skip(1).Select(x => uint.Parse(x.Substring(2), NumberStyles.HexNumber)).ToArray(), t));
                     }
                 }
             }
@@ -197,10 +197,10 @@ namespace IBDTools.Screens {
             var matches = EventTypeDetectors.Select(
                 colors => {
                     long d = 0;
-                    if (colors.Item1.Length != blends.Count()) return (long.MaxValue, colors.Item1, colors.Item2);
+                    if (colors.Item1.Length != blends.Count()) return Tuple.Create(long.MaxValue, colors.Item1, colors.Item2);
                     for (var i = 0; i < colors.Item1.Length; i++)
                         d += blends[i].ColorDiff((int) colors.Item1[i]);
-                    return (d, colors.Item1, colors.Item2);
+                    return Tuple.Create(d, colors.Item1, colors.Item2);
                 }
             ).Where(x => x.Item1 < 3500).OrderBy(x => x.Item1).ToArray();
             var match = matches.FirstOrDefault();
