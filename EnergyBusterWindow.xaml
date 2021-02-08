@@ -23,17 +23,20 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Grid.ColumnSpan="3" TextWrapping="Wrap" Margin="6">
             Go to the game and open event hall, then press start button. Press Ctrl+Shift+S when you want to stop.
         </TextBlock>
+        <CheckBox Grid.Row="1" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding Path=DismissExchanges}">Dismiss hero exchange events</CheckBox>
+        <CheckBox Grid.Row="2" Grid.ColumnSpan="3" Margin="6" IsChecked="{Binding Path=DismissBarters}">Dismiss stuff barter events</CheckBox>
 
-        <Button Grid.Row="1" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6"
+        <Button Grid.Row="3" Grid.Column="0" Click="StartBattle" Padding="6" Margin="6"
                 IsEnabled="{Binding IsNotRunning, Mode=OneWay}">
             Start
         </Button>
-        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6" />
-        <TextBlock Margin="6" Grid.Row="3" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
+        <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Text="{Binding Status, Mode=OneWay}" Margin="6" />
+        <TextBlock Margin="6" Grid.Row="5" Grid.ColumnSpan="3" Text="{Binding MainMessage, Mode=OneWay}" />
     </Grid>
 </w:KbHookWindow>

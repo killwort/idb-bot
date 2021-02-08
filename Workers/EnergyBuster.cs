@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -13,9 +14,15 @@ using IBDTools.VMs;
 namespace IBDTools.Workers {
     public class EnergyBuster : IWorker {
         public static int n = 0;
+        public bool DismissExchanges = false;
+        public bool DismissBarters = false;
+
         public async Task Run(GameContext context, BaseWorkerWindow vm, Action<string> statusUpdater, CancellationToken cancellationToken) {
             await Task.CompletedTask;
             var hall = new EventHall(context);
+            var ignoredTypes = new List<Type>();
+            if (!DismissBarters) ignoredTypes.Add(typeof(BarterEvent));
+            if (!DismissExchanges) ignoredTypes.Add(typeof(ExchangeEvent));
 
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -24,7 +31,7 @@ namespace IBDTools.Workers {
                 statusUpdater("Looking for active events...");
                 await hall.ToggleFastBattle(true, cancellationToken);
                 var events = hall.Events;
-                var ev = events.FirstOrDefault(x => !x.Ignore);
+                var ev = events.FirstOrDefault(x => !ignoredTypes.Contains(x.GetType()));
 
                 /*foreach (var eev in events) {
                     using (var sbm = new Bitmap(eev.ClickBox.Width, eev.ClickBox.Height)) {
@@ -47,7 +54,6 @@ namespace IBDTools.Workers {
                         }
                     }
                 }*/
-
 
                 if (ev != null) {
                     statusUpdater($"Resolving {ev.GetType().Name}...");
