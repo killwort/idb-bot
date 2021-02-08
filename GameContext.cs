@@ -26,7 +26,19 @@ namespace IBDTools {
             _process = Process.GetProcessesByName("DMW").FirstOrDefault();
             if (_process == null) return false;
             Logger.InfoFormat("Found game process {0}", _process.Id);
-            WinApi.SetWindowPos(_process.MainWindowHandle, IntPtr.Zero, 0, 0, 1000, 700, 2);
+            //984/661
+            var setW = 1000;
+            var setH = 700;
+            int fixW, fixH;
+            do {
+                WinApi.SetWindowPos(_process.MainWindowHandle, IntPtr.Zero, 0, 0, setW, setH, 2);
+                WinApi.GetClientRect(_process.MainWindowHandle, out var clientSize);
+                fixW = 984 - clientSize.Width;
+                fixH = 661 - clientSize.Height;
+                setW += fixW;
+                setH += fixH;
+            } while (fixW != 0 && fixH != 0);
+
             Logger.Info("Game window size reset");
             return true;
         }

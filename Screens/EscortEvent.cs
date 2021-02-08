@@ -65,7 +65,7 @@ namespace IBDTools.Screens {
 
         public EscortEvent(Rectangle clickBox) : base(clickBox) { }
 
-        public override async Task ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
+        public override async Task<bool> ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
             await Activate(context, cancellationToken);
             await context.ClickAt(DialogButton1, cancellationToken);
             var battle = new PrepareBattle(context);
@@ -80,12 +80,13 @@ namespace IBDTools.Screens {
                     await battle.Activation(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token).Token);
                 } catch (TaskCanceledException) {
                     await TryClose(context, cancellationToken);
-                    return;
+                    return false;
                 }
             }
 
             await battle.Engage(cancellationToken);
             await WaitCombatEnd(context, cancellationToken);
+            return true;
         }
     }
 }

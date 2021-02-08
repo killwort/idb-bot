@@ -6,9 +6,10 @@ namespace IBDTools.Screens {
     public class ChestEvent : Event {
         public ChestEvent(Rectangle clickBox) : base(clickBox) { }
 
-        public override async Task ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
+        public override async Task<bool> ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
             await Activate(context, cancellationToken);
             await context.ClickAt(DialogButton1, cancellationToken);
+            return true;
         }
     }
 }

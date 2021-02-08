@@ -6,9 +6,10 @@ namespace IBDTools.Screens {
     public class ExchangeEvent : Event {
         public ExchangeEvent(Rectangle clickBox) : base(clickBox) { }
 
-        public override async Task ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
+        public override async Task<bool> ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
             await Activate(context, cancellationToken);
             await context.ClickAt(DialogDeleteButton, cancellationToken);
+            return true;
         }
 
         public override bool Ignore => true;

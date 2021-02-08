@@ -12,7 +12,7 @@ namespace IBDTools.Screens {
 
         public Event(Rectangle clickBox) { ClickBox = clickBox; }
 
-        public abstract Task ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken);
+        public abstract Task<bool> ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken);
 
         protected async Task Activate(GameContext context, CancellationToken cancellationToken) {
             await context.ClickAt(ClickBox.Left + ClickBox.Width / 2, ClickBox.Top + ClickBox.Height / 2, cancellationToken);

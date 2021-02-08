@@ -26,7 +26,7 @@ namespace IBDTools.Workers {
                 var events = hall.Events;
                 var ev = events.FirstOrDefault(x => !x.Ignore);
 
-                foreach (var eev in events) {
+                /*foreach (var eev in events) {
                     using (var sbm = new Bitmap(eev.ClickBox.Width, eev.ClickBox.Height)) {
                         using (var dc = Graphics.FromImage(sbm)) {
                             dc.DrawImage(hall.Screen, 0, 0, eev.ClickBox, GraphicsUnit.Pixel);
@@ -45,14 +45,16 @@ namespace IBDTools.Workers {
                                 ms.CopyTo(fs);
                             }
                         }
-
                     }
-                }
+                }*/
 
 
                 if (ev != null) {
                     statusUpdater($"Resolving {ev.GetType().Name}...");
-                    await hall.ResolveEvent(ev, cancellationToken);
+                    if (!await hall.ResolveEvent(ev, cancellationToken)) {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        await hall.FindMoreEvents(cancellationToken);
+                    }
                 } else {
                     statusUpdater("No events found, searching for one...");
                     await hall.FindMoreEvents(cancellationToken);

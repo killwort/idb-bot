@@ -8,6 +8,6 @@ namespace IBDTools.Screens {
         public UnknownEvent(Rectangle clickBox) : base(clickBox) { }
 
         public override bool Ignore => true;
-        public override Task ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public override Task<bool> ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) => throw new NotImplementedException();
     }
 }

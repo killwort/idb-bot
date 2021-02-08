@@ -6,9 +6,10 @@ namespace IBDTools.Screens {
     public class BarterEvent : Event {
         public BarterEvent(Rectangle clickBox) : base(clickBox) { }
 
-        public override async Task ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
+        public override async Task<bool> ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
             await Activate(context, cancellationToken);
             await Dismiss(context, cancellationToken);
+            return true;
         }
     }
 }

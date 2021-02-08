@@ -162,7 +162,7 @@ namespace IBDTools.Screens {
 
         public Bitmap Screen => CurrentScreen;
 
-        public Task ResolveEvent(Event ev, CancellationToken token) => ev.ResolveEvent(this, this.Context, token);
+        public Task<bool> ResolveEvent(Event ev, CancellationToken token) => ev.ResolveEvent(this, this.Context, token);
 
         private Event ToEvent(BoundingBox boundingBox) {
             //Fix for events close to the right part of the screen (clipped)
