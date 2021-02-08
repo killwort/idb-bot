@@ -8,7 +8,7 @@ namespace IBDTools.Screens {
 
         public override async Task<bool> ResolveEvent(EventHall eventHall, GameContext context, CancellationToken cancellationToken) {
             await Activate(context, cancellationToken);
-            await context.ClickAt(DialogDeleteButton, cancellationToken);
+            await Dismiss(context, cancellationToken);
             return true;
         }
 
