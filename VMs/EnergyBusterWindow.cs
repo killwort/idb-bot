@@ -4,9 +4,11 @@ using Newtonsoft.Json.Linq;
 
 namespace IBDTools.VMs {
     public class EnergyBusterWindow : BaseWorkerWindow {
-        protected override IWorker CreateWorker() => new EnergyBuster {
-
-        };
+        protected override IWorker CreateWorker() =>
+            new EnergyBuster {
+                DismissBarters = DismissBarters,
+                DismissExchanges = DismissExchanges
+            };
         public static readonly DependencyProperty DismissExchangesProperty = DependencyProperty.Register("DismissExchanges", typeof(bool), typeof(EnergyBusterWindow), new PropertyMetadata(default(bool)));
 
         public bool DismissExchanges { get { return (bool) GetValue(DismissExchangesProperty); } set { SetValue(DismissExchangesProperty, value); } }
