@@ -33,6 +33,9 @@ namespace IBDTools {
             var dialog = new EnergyBusterWindow();
             dialog.ShowDialog();
         }
-
+        private void StartWall(object sender, RoutedEventArgs e) {
+            var dialog = new Wall();
+            dialog.ShowDialog();
+        }
     }
 }

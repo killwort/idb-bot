@@ -88,6 +88,7 @@
         <Compile Include="Screens\VerifyByPointsScreen.cs" />
         <Compile Include="Screens\VerifyByTextScreen.cs" />
         <Compile Include="App.xaml.cs" />
+        <Compile Include="Screens\WallBattle.cs" />
         <Compile Include="Screens\WorldMap.cs" />
         <Compile Include="TreasureLoot.xaml.cs">
           <DependentUpon>TreasureLoot.xaml</DependentUpon>
@@ -99,6 +100,10 @@
         <Compile Include="VMs\MainWindow.cs" />
         <Compile Include="VMs\MapperWindow.cs" />
         <Compile Include="VMs\TreasureLootWindow.cs" />
+        <Compile Include="VMs\WallWindow.cs" />
+        <Compile Include="Wall.xaml.cs">
+          <DependentUpon>Wall.xaml</DependentUpon>
+        </Compile>
         <Compile Include="WinApi.cs" />
         <Compile Include="Workers\Arena.cs" />
         <Compile Include="Workers\CardsClaimer.cs" />
@@ -111,6 +116,7 @@
         <Compile Include="Workers\ScoreFallbackArenaStrategy.cs" />
         <Compile Include="Workers\EnergyBuster.cs" />
         <Compile Include="Workers\TreasureMapLooter.cs" />
+        <Compile Include="Workers\WallBattler.cs" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="log4net" Version="2.0.9" />
@@ -157,6 +163,10 @@
         <Generator>MSBuild:Compile</Generator>
       </Page>
       <Page Include="TreasureLoot.xaml">
+        <SubType>Designer</SubType>
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+      <Page Include="Wall.xaml">
         <SubType>Designer</SubType>
         <Generator>MSBuild:Compile</Generator>
       </Page>

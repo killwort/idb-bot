@@ -16,6 +16,12 @@ namespace IBDTools {
                 await Task.Delay(250, cancellationToken);
             }
         }
+        public static async Task Deactivation(this IScreen screen, CancellationToken cancellationToken) {
+            while (screen.IsScreenActive()) {
+                cancellationToken.ThrowIfCancellationRequested();
+                await Task.Delay(250, cancellationToken);
+            }
+        }
 
         public static bool VerifyPixelColor(this Bitmap bitmap, Point point, Color color, int maxDivergence = 30) {
             var cl = bitmap.GetPixel(point.X, point.Y);
