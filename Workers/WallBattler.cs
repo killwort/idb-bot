@@ -11,7 +11,7 @@ namespace IBDTools.Workers {
             await Task.CompletedTask;
             var wall = new WallBattle(context);
             if (!wall.IsScreenActive())
-                throw new InvalidOperationException("You're not at the treasure maps screen");
+                throw new InvalidOperationException("You're not in the wall combat");
             var lastOneMirror = DateTime.UtcNow;
             var strange = 0;
 

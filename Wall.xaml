@@ -7,7 +7,7 @@
                 xmlns:local="clr-namespace:IBDTools.VMs"
                 mc:Ignorable="d"
                 x:Name="SelfWindow"
-                Title="IDB Treasure Maps Looter" Height="280" Width="400">
+                Title="IDB Wall Runner" Height="280" Width="400">
     <Window.DataContext>
         <local:WallWindow />
     </Window.DataContext>
