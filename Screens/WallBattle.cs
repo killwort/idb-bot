@@ -14,14 +14,14 @@ namespace IBDTools.Screens {
         protected override Tuple<Point, Color>[] RequiredPoints =>
             new[] {
                 Tuple.Create(new Point(3, 5), Color.FromArgb(102, 86, 110)),
-                Tuple.Create(new Point(118, 638), Color.FromArgb(86, 64, 95)),
-                Tuple.Create(new Point(448, 616), Color.FromArgb(255, 255, 198))
+                Tuple.Create(new Point(951, 597), Color.FromArgb(246, 237, 255)),
+                // Tuple.Create(new Point(448, 616), Color.FromArgb(255, 255, 198))
             };
         protected Tuple<Point, Color>[] RequiredPointsFailure =>
             new[] {
                 Tuple.Create(new Point(3, 5), Color.FromArgb(32, 27, 34)),
-                Tuple.Create(new Point(118, 638), Color.FromArgb(28, 20, 30)),
-                Tuple.Create(new Point(448, 616), Color.FromArgb(79, 79, 58)),
+                //Tuple.Create(new Point(118, 638), Color.FromArgb(28, 20, 30)),
+                Tuple.Create(new Point(274, 162), Color.FromArgb(82,72,116)),
                 Tuple.Create(TwoMirrorsButton, Color.FromArgb(146,91,72)),
                 Tuple.Create(OneMirroButton, Color.FromArgb(38,85,118)),
             };

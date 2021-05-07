@@ -22,7 +22,7 @@ namespace IBDTools.Workers {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!wall.IsFailureDialogActive()) {
                     if (strange++ > 50)
-                        throw new Exception("Desynchronizad from battle");
+                        throw new Exception("Desynchronized from battle");
                     continue;
                 }
 
