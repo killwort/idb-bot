@@ -29,7 +29,9 @@
             Go to the game and start battle on the wall, then press start button. Press Ctrl+Shift+S when you want to stop.
         </TextBlock>
 
-        <Button Grid.Row="1" Grid.Column="0" Click="StartRun" Padding="6" Margin="6"
+        <Label Grid.Row="1" Margin="6">Reset interval (minutes)</Label>
+        <TextBox Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="1" Margin="6" Text="{Binding ResetInterval, Mode=TwoWay}" />
+        <Button Grid.Row="2" Grid.Column="0" Click="StartRun" Padding="6" Margin="6"
                 IsEnabled="{Binding IsNotRunning, Mode=OneWay}">
             Start
         </Button>

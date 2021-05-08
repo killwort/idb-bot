@@ -7,6 +7,7 @@ using IBDTools.VMs;
 
 namespace IBDTools.Workers {
     public class WallBattler : IWorker {
+        public int ResetInterval = 15;
         public async Task Run(GameContext context, BaseWorkerWindow vm, Action<string> statusUpdater, CancellationToken cancellationToken) {
             await Task.CompletedTask;
             var wall = new WallBattle(context);
@@ -27,7 +28,7 @@ namespace IBDTools.Workers {
                 }
 
                 strange = 0;
-                if ((DateTime.UtcNow - lastOneMirror).TotalMinutes > 15) {
+                if ((DateTime.UtcNow - lastOneMirror).TotalMinutes > ResetInterval) {
                     statusUpdater("Respawning...");
                     lastOneMirror = DateTime.UtcNow;
                     await wall.PressUse1Mirror(cancellationToken);
